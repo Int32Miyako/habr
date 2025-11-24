@@ -5,6 +5,7 @@ import (
 	"habr/db"
 	"habr/internal/config"
 	"habr/internal/core/blog"
+	"log"
 )
 
 func main() {
@@ -16,8 +17,14 @@ func main() {
 	}
 
 	blogRepository := blog.NewRepository(database.Pool)
-	err = blogRepository.CreateBlog("ok", ctx)
+	err = blogRepository.CreateBlog(ctx, "ok")
 	if err != nil {
 		panic(err)
 	}
+
+	blogs, err := blogRepository.GetBlogs(ctx)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(blogs)
 }
