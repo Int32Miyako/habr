@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres
+    container_name: blog_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-root_db}
+    ports:
+      - "5432:5432"
