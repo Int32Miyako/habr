@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"habr/db"
-	"habr/internal/config"
-	"habr/internal/core/blog"
+	"habr/internal/blog/config"
+	"habr/internal/blog/core/blog"
+	"habr/internal/blog/http-server"
 	"log"
 	"net/http"
 )
@@ -21,20 +21,10 @@ func main() {
 	blogRepository := blog.NewRepository(database.Pool)
 	blogService := blog.NewService(blogRepository)
 
-	var id int64
-	id, err = blogService.CreateBlog(ctx, "yes")
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(id)
+	router := http_server.NewRouter(ctx, blogService)
 
-	blogs, err := blogService.GetBlogs(ctx)
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(blogs)
-
-	err = http.ListenAndServe(":8080", nil)
+	log.Println("listening on :8080")
+	err = http.ListenAndServe(":8080", router)
 	if err != nil {
 		panic(err)
 	}

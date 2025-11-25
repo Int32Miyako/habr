@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
-	"habr/internal/config"
+	"habr/internal/blog/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
