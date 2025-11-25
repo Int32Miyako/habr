@@ -6,16 +6,21 @@ import (
 	"net/http"
 )
 
-func RespJSON(w http.ResponseWriter, obj any) {
+func RespJSON(status int, obj any, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	m, err := json.Marshal(obj)
+	w.WriteHeader(status)
+
+	data, err := json.Marshal(obj)
 	if err != nil {
-		log.Fatal(err)
-		return
+		http.Error(w, `{"error":"failed to marshal response"}`, http.StatusInternalServerError)
+		return err
 	}
-	_, err = w.Write(m)
+
+	_, err = w.Write(data)
 	if err != nil {
-		log.Fatal(err)
-		return
+		log.Println(err.Error())
+		return err
 	}
+
+	return nil
 }

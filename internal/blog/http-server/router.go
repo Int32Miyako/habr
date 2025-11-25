@@ -2,7 +2,6 @@ package http_server
 
 import (
 	"context"
-	"fmt"
 	"habr/internal/blog/core/blog"
 	"habr/internal/lib/api/http-server"
 	"log"
@@ -14,6 +13,7 @@ import (
 
 func NewRouter(ctx context.Context, blogService *blog.Service) http.Handler {
 	r := chi.NewRouter()
+
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -24,8 +24,10 @@ func NewRouter(ctx context.Context, blogService *blog.Service) http.Handler {
 		if err != nil {
 			log.Println(err)
 		}
-		http_server.RespJSON(w, blogs)
-		fmt.Println(blogs)
+		err = http_server.RespJSON(200, blogs, w)
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
 	return r
