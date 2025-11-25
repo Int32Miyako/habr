@@ -1,17 +1,15 @@
 package http_server
 
 import (
-	"context"
 	"habr/internal/blog/core/blog"
-	"habr/internal/lib/api/http-server"
-	"log"
+	handlers "habr/internal/blog/http-server/handlers/blog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(ctx context.Context, blogService *blog.Service) http.Handler {
+func NewRouter(blogService *blog.Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -19,15 +17,16 @@ func NewRouter(ctx context.Context, blogService *blog.Service) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		blogs, err := blogService.GetBlogs(ctx)
-		if err != nil {
-			log.Println(err)
-		}
-		err = http_server.RespJSON(200, blogs, w)
-		if err != nil {
-			log.Println(err)
-		}
+	r.Route("/blogs", func(r chi.Router) {
+		r.Get("/", handlers.GetAllBlogs(blogService))
+
+		r.Get("/{id}", handlers.GetBlogByID(blogService))
+
+		r.Post("/", handlers.CreateBlog(blogService))
+
+		r.Put("/{id}", handlers.UpdateBlog(blogService))
+
+		r.Delete("/{id}", handlers.DeleteBlog(blogService))
 	})
 
 	return r

@@ -32,7 +32,7 @@ func Initialize(ctx context.Context, cfg *config.Database) (*Database, error) {
 	_, err = pool.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS blogs (
 				id SERIAL PRIMARY KEY,
-				blog_name TEXT);
+				name TEXT);
 
              CREATE INDEX IF NOT EXISTS idx_blog_name ON blogs(blog_name);
 		`)

@@ -21,7 +21,7 @@ func main() {
 	blogRepository := blog.NewRepository(database.Pool)
 	blogService := blog.NewService(blogRepository)
 
-	router := http_server.NewRouter(ctx, blogService)
+	router := http_server.NewRouter(blogService)
 
 	log.Println("listening on :8080")
 	err = http.ListenAndServe(":8080", router)
