@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/http-server/dto"
-	"habr/internal/lib/api/http-server"
+	"habr/internal/pkg/formatter"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,9 +18,9 @@ func GetAllBlogs(blogService *blog.Service) http.HandlerFunc {
 		blogs, err := blogService.GetBlogs(ctx)
 		if err != nil {
 			log.Println(err)
-			_ = http_server.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
 		}
-		err = http_server.RespJSON(200, blogs, w)
+		err = formatter.RespJSON(200, blogs, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -40,9 +40,9 @@ func GetBlogByID(blogService *blog.Service) http.HandlerFunc {
 		b, err := blogService.GetBlog(ctx, id)
 		if err != nil {
 			log.Println(err)
-			_ = http_server.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
 		}
-		err = http_server.RespJSON(200, b, w)
+		err = formatter.RespJSON(200, b, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -55,18 +55,18 @@ func CreateBlog(blogService *blog.Service) http.HandlerFunc {
 		req := dto.RequestCreateBlog{}
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = http_server.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
 			return
 		}
 
 		id, err := blogService.CreateBlog(ctx, req.Name)
 		if err != nil {
 			log.Println(err)
-			_ = http_server.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
 			return
 		}
 
-		err = http_server.RespJSON(200, map[string]int64{"id": id}, w)
+		err = formatter.RespJSON(200, map[string]int64{"id": id}, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -85,18 +85,18 @@ func UpdateBlog(blogService *blog.Service) http.HandlerFunc {
 		req := dto.RequestUpdateBlog{}
 		err = json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = http_server.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
 			return
 		}
 
 		id, err = blogService.UpdateBlog(ctx, req.Name, id)
 		if err != nil {
 			log.Println(err)
-			_ = http_server.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
 			return
 		}
 
-		err = http_server.RespJSON(200, dto.ResponseUpdateBlog{Id: id}, w)
+		err = formatter.RespJSON(200, dto.ResponseUpdateBlog{Id: id}, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -115,11 +115,11 @@ func DeleteBlog(blogService *blog.Service) http.HandlerFunc {
 		id, err = blogService.DeleteBlog(ctx, id)
 		if err != nil {
 			log.Println(err)
-			_ = http_server.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
 			return
 		}
 
-		err = http_server.RespJSON(200, dto.ResponseDeleteBlog{Id: id}, w)
+		err = formatter.RespJSON(200, dto.ResponseDeleteBlog{Id: id}, w)
 		if err != nil {
 			log.Println(err)
 		}

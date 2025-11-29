@@ -11,3 +11,15 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-root_db}
     ports:
       - "5432:5432"
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      - db
+    volumes:
+      - ./migrations:/migrations
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      "sleep 3 &&
+       migrate -path=/migrations
+               -database postgres://user:pass@db:5432/app?sslmode=disable
+               up"

@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS idx_blog_name;
+DROP TABLE IF EXISTS blogs;

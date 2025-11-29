@@ -29,16 +29,6 @@ func Initialize(ctx context.Context, cfg *config.Database) (*Database, error) {
 		pool.Close()
 		return nil, err
 	}
-	_, err = pool.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS blogs (
-				id SERIAL PRIMARY KEY,
-				name TEXT);
-
-             CREATE INDEX IF NOT EXISTS idx_blog_name ON blogs(blog_name);
-		`)
-	if err != nil {
-		return nil, err
-	}
 
 	return &Database{Pool: pool}, nil
 }
