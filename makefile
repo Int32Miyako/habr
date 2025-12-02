@@ -1,5 +1,8 @@
-run:
+runBlog:
 	go run cmd/blog/main.go
+
+runAuth:
+	go run cmd/auth/main.go
 
 migrateUp:
 	go run ./cmd/migrator/main.go \
