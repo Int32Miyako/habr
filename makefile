@@ -17,3 +17,11 @@ migrateDown:
     	--migrations-path="./db/migrations" \
    		--migrations-table="migrations" \
    		--direction="down"
+
+
+generateProto:
+	protoc \
+ 	 -I protos/proto \
+ 	 protos/proto/auth/auth.proto \
+ 	 --go_out=protos/gen/go --go_opt=paths=source_relative \
+ 	 --go-grpc_out=protos/gen/go --go-grpc_opt=paths=source_relative
