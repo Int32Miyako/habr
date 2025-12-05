@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"habr/db"
+	db "habr/db/blog"
 	"habr/internal/blog/config"
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/http-server"
@@ -13,7 +13,7 @@ import (
 func main() {
 	cfg := config.MustLoad()
 	ctx := context.Background()
-	database, err := db.Initialize(ctx, cfg.Database)
+	database, err := db.Initialize(ctx, cfg)
 	if err != nil {
 		panic(err)
 	}

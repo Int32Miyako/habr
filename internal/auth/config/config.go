@@ -36,13 +36,9 @@ func MustLoad() *Config {
 		panic("Error loading .env file")
 	}
 
-	timeout, err := strconv.Atoi(os.Getenv("BLOG_HTTP_TIMEOUT"))
+	timeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
 	if err != nil {
-		log.Fatal("Error parsing BLOG_HTTP_TIMEOUT")
-	}
-	idleTimeout, err := strconv.Atoi(os.Getenv("BLOG_HTTP_IDLE_TIMEOUT"))
-	if err != nil {
-		log.Fatal("Error parsing BLOG_HTTP_IDLE_TIMEOUT")
+		log.Fatal("Error parsing HTTP_TIMEOUT")
 	}
 
 	return &Config{
@@ -51,13 +47,14 @@ func MustLoad() *Config {
 			Port:     os.Getenv("DB_PORT"),
 			Username: os.Getenv("DB_USER"),
 			Password: os.Getenv("DB_PASSWORD"),
-			DBName:   os.Getenv("BLOG_DB_NAME"),
+			DBName:   os.Getenv("AUTH_DB_NAME"),
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("BLOG_HTTP_ADDRESS"),
+			Address:     os.Getenv("AUTH_GRPC_ADDRESS"),
 			Timeout:     time.Duration(timeout),
-			IdleTimeout: time.Duration(idleTimeout),
+			IdleTimeout: time.Duration(timeout),
 		},
 	}
+
 }
