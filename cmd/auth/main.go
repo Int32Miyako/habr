@@ -4,6 +4,8 @@ import (
 	"context"
 	"habr/db/auth"
 	"habr/internal/auth/app"
+	"habr/internal/auth/app/repositories"
+	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"habr/internal/auth/logger"
 )
@@ -20,7 +22,14 @@ func main() {
 	log := logger.New()
 	log.Info("Starting auth service")
 
-	_ = database
+	userRepo := repositories.NewUserRepository(database.Pool)
+	userService := services.NewUserService(userRepo)
+	id, err := userService.RegisterUser(ctx, "bogdan", "hashed_password_example", "example_email")
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	log.Info("id:", id)
 
 	application := app.New()
 	go func() {
