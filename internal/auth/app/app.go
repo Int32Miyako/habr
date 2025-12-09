@@ -5,12 +5,10 @@ import (
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"log/slog"
-
-	"google.golang.org/grpc/serviceconfig"
 )
 
 type App struct {
-	// GRPCServer *grpcapp.App
+	GRPCServer *grpc.App
 }
 
 func New() *App {
@@ -19,5 +17,13 @@ func New() *App {
 
 func (app *App) Start(cfg *config.Config, log *slog.Logger, userService *services.UserService) {
 	grpcApp := grpc.New(log, cfg, userService)
+	app.GRPCServer = grpcApp
 
+	grpcApp.MustRun()
+}
+
+func (app *App) Stop() {
+	if app.GRPCServer != nil {
+		app.GRPCServer.Stop()
+	}
 }

@@ -8,6 +8,9 @@ import (
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"habr/internal/auth/logger"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -24,16 +27,18 @@ func main() {
 
 	userRepo := repositories.NewUserRepository(database.Pool)
 	userService := services.NewUserService(userRepo)
-	id, err := userService.RegisterUser(ctx, "example_email", "bogdan", "hashed_password_example")
-	if err != nil {
-		log.Error(err.Error())
-	}
-
-	log.Info("id:", id)
 
 	application := app.New()
 	go func() {
-		application.Start(cfg, log)
-
+		application.Start(cfg, log, userService)
 	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	<-stop
+
+	application.GRPCServer.Stop()
+	log.Info("Gracefully stopped")
+
 }
