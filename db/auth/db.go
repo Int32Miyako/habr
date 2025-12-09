@@ -1,25 +1,20 @@
-package db
+package auth
 
 import (
 	"context"
 	"fmt"
-	"habr/internal/blog/config"
+	"habr/internal/auth/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-)
-
-const (
-	HOST = "localhost"
-	PORT = 5432
 )
 
 type Database struct {
 	Pool *pgxpool.Pool
 }
 
-func Initialize(ctx context.Context, cfg *config.Database) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		HOST, PORT, cfg.Username, cfg.Password, cfg.DBName)
+func Initialize(ctx context.Context, cfg *config.Config) (*Database, error) {
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.DBName)
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
