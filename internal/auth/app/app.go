@@ -1,9 +1,12 @@
 package app
 
 import (
+	"habr/internal/auth/app/grpc"
+	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"log/slog"
-	"net"
+
+	"google.golang.org/grpc/serviceconfig"
 )
 
 type App struct {
@@ -14,12 +17,7 @@ func New() *App {
 	return &App{}
 }
 
-func (app *App) Start(cfg *config.Config, log *slog.Logger) {
-	l, err := net.Listen("tcp", cfg.Port)
-	defer l.Close()
-	if err != nil {
-		log.Error("Error starting http server", "error", err)
-	}
+func (app *App) Start(cfg *config.Config, log *slog.Logger, userService *services.UserService) {
+	grpcApp := grpc.New(log, cfg, userService)
 
-	log.Info("Starting http server", "port", cfg.Port)
 }

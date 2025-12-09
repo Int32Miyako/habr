@@ -10,8 +10,8 @@ service Auth {
 }
 
 message RegisterRequest {
-  string username = 1;
-  string email = 2;
+  string email = 1;
+  string username = 2;
   string password = 3;
 }
 

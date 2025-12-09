@@ -24,7 +24,7 @@ func main() {
 
 	userRepo := repositories.NewUserRepository(database.Pool)
 	userService := services.NewUserService(userRepo)
-	id, err := userService.RegisterUser(ctx, "bogdan", "hashed_password_example", "example_email")
+	id, err := userService.RegisterUser(ctx, "example_email", "bogdan", "hashed_password_example")
 	if err != nil {
 		log.Error(err.Error())
 	}
