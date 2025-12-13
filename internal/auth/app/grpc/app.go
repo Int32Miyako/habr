@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
-	grpcserver "habr/internal/auth/grpc"
+	grpcserver "habr/internal/auth/grpc/server"
 	"log/slog"
 	"net"
 
