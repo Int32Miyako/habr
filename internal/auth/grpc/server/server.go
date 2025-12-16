@@ -59,3 +59,21 @@ func (s *serverAPI) Register(ctx context.Context, req *auth.RegisterRequest) (*a
 		UserId: userID,
 	}, nil
 }
+
+func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.LoginResponse, error) {
+	const op = "grpc.Login"
+
+	if req.GetEmail() == "" {
+		return nil, fmt.Errorf("%s: email is required", op)
+	}
+
+	if req.GetPassword() == "" {
+		return nil, fmt.Errorf("%s: password is required", op)
+	}
+
+	return &auth.LoginResponse{
+		AccessToken:  "",
+		RefreshToken: "",
+		UserId:       0,
+	}, nil
+}
