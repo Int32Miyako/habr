@@ -13,6 +13,7 @@ type (
 	Config struct {
 		*Database
 		*HTTPServer
+		*JWT
 	}
 
 	Database struct {
@@ -30,6 +31,12 @@ type (
 	}
 )
 
+type JWT struct {
+	SecretKey            string
+	AccessTokenDuration  time.Duration
+	RefreshTokenDuration time.Duration
+}
+
 func MustLoad() *Config {
 	err := godotenv.Load()
 	if err != nil {
@@ -39,6 +46,16 @@ func MustLoad() *Config {
 	timeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
 	if err != nil {
 		log.Fatal("Error parsing HTTP_TIMEOUT")
+	}
+
+	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
+	if err != nil {
+		accessTokenDuration = 15 // по умолчанию 15 минут
+	}
+
+	refreshTokenDuration, err := strconv.Atoi(os.Getenv("JWT_REFRESH_TOKEN_DURATION_DAYS"))
+	if err != nil {
+		refreshTokenDuration = 30 // по умолчанию 30 дней
 	}
 
 	return &Config{
@@ -54,6 +71,12 @@ func MustLoad() *Config {
 			Address:     os.Getenv("AUTH_GRPC_ADDRESS"),
 			Timeout:     time.Duration(timeout),
 			IdleTimeout: time.Duration(timeout),
+		},
+
+		JWT: &JWT{
+			SecretKey:            os.Getenv("JWT_SECRET_KEY"),
+			AccessTokenDuration:  time.Duration(accessTokenDuration) * time.Minute,
+			RefreshTokenDuration: time.Duration(refreshTokenDuration) * 24 * time.Hour,
 		},
 	}
 

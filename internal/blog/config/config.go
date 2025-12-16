@@ -13,6 +13,7 @@ type (
 	Config struct {
 		*Database
 		*HTTPServer
+		*AuthGRPC
 	}
 
 	Database struct {
@@ -27,6 +28,10 @@ type (
 		Address     string
 		Timeout     time.Duration
 		IdleTimeout time.Duration
+	}
+
+	AuthGRPC struct {
+		Address string
 	}
 )
 
@@ -58,6 +63,10 @@ func MustLoad() *Config {
 			Address:     os.Getenv("BLOG_HTTP_ADDRESS"),
 			Timeout:     time.Duration(timeout),
 			IdleTimeout: time.Duration(idleTimeout),
+		},
+
+		AuthGRPC: &AuthGRPC{
+			Address: os.Getenv("AUTH_GRPC_ADDRESS"),
 		},
 	}
 }

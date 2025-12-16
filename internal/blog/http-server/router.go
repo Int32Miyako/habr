@@ -2,6 +2,7 @@ package http_server
 
 import (
 	"habr/internal/blog/core/blog"
+	"habr/internal/blog/grpc/client"
 	handlers "habr/internal/blog/http-server/handlers/blog"
 	"net/http"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(blogService *blog.Service) http.Handler {
+func NewRouter(blogService *blog.Service, authClient *client.AuthClient) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
