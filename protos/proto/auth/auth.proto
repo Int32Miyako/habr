@@ -10,11 +10,14 @@ service Auth {
   rpc Refresh (RefreshRequest) returns (RefreshResponse);
   rpc Logout (LogoutRequest) returns (LogoutResponse);
   rpc Validate (ValidateRequest) returns (ValidateResponse);
+
+}
+
+message RegisterRequest {
   string email = 1;
   string username = 2;
   string password = 3;
 }
-
 message RegisterResponse {
   int64 user_id = 1;
 }
@@ -26,5 +29,31 @@ message LoginRequest {
 
 message LoginResponse {
   string token = 1;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message LogoutRequest {
+  string access_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message ValidateRequest {
+  string access_token = 1;
+}
+
+message ValidateResponse {
+  bool valid = 1;
+  int64 user_id = 2;
 }
 
