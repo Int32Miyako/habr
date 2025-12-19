@@ -23,14 +23,13 @@ message RegisterResponse {
 }
 
 message LoginRequest {
-  string email = 1;     // или username — выбери один
+  string email = 1;
   string password = 2;
 }
 
 message LoginResponse {
   string access_token = 1;
-  string refresh_token = 2;
-  int64 user_id = 3;
+  int64 user_id = 2;
 }
 
 message RefreshRequest {

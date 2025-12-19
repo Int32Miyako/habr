@@ -4,6 +4,7 @@ import (
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/grpc/client"
 	handlers "habr/internal/blog/http-server/handlers/blog"
+	"habr/internal/blog/http-server/middlewares"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -19,6 +20,8 @@ func NewRouter(blogService *blog.Service, authClient *client.AuthClient) http.Ha
 	r.Use(middleware.Recoverer)
 
 	r.Route("/blogs", func(r chi.Router) {
+		r.Use(middlewares.AuthMiddleware(authClient))
+
 		r.Get("/", handlers.GetAllBlogs(blogService))
 
 		r.Get("/{id}", handlers.GetBlogByID(blogService))

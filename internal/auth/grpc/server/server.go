@@ -72,8 +72,7 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 	}
 
 	return &auth.LoginResponse{
-		AccessToken:  "",
-		RefreshToken: "",
-		UserId:       0,
+		AccessToken: "",
+		UserId:      0,
 	}, nil
 }

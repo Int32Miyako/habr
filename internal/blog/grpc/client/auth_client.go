@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"habr/protos/gen/go/auth"
+	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -58,4 +59,17 @@ func (c *AuthClient) Login(ctx context.Context, email, password string) (*auth.L
 // GetClient возвращает нативный gRPC клиент для прямого использования
 func (c *AuthClient) GetClient() auth.AuthClient {
 	return c.client
+}
+
+func (c *AuthClient) Validate(ctx context.Context, token string) bool {
+	resp, err := c.client.Validate(ctx, &auth.ValidateRequest{
+		AccessToken: token,
+	})
+
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return resp.Valid
 }
