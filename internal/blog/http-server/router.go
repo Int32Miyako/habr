@@ -3,7 +3,8 @@ package http_server
 import (
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/grpc/client"
-	handlers "habr/internal/blog/http-server/handlers/blog"
+	authHandlers "habr/internal/blog/http-server/handlers/auth"
+	blogHandlers "habr/internal/blog/http-server/handlers/blog"
 	"habr/internal/blog/http-server/middlewares"
 	"net/http"
 
@@ -22,15 +23,21 @@ func NewRouter(blogService *blog.Service, authClient *client.AuthClient) http.Ha
 	r.Route("/blogs", func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware(authClient))
 
-		r.Get("/", handlers.GetAllBlogs(blogService))
+		r.Get("/", blogHandlers.GetAllBlogs(blogService))
 
-		r.Get("/{id}", handlers.GetBlogByID(blogService))
+		r.Get("/{id}", blogHandlers.GetBlogByID(blogService))
 
-		r.Post("/", handlers.CreateBlog(blogService))
+		r.Post("/", blogHandlers.CreateBlog(blogService))
 
-		r.Put("/{id}", handlers.UpdateBlog(blogService))
+		r.Put("/{id}", blogHandlers.UpdateBlog(blogService))
 
-		r.Delete("/{id}", handlers.DeleteBlog(blogService))
+		r.Delete("/{id}", blogHandlers.DeleteBlog(blogService))
+	})
+
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/register", authHandlers.RegisterUser(authClient))
+
+		r.Get("/login", authHandlers.LoginUser(authClient))
 	})
 
 	return r
