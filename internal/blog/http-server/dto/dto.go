@@ -20,3 +20,15 @@ type (
 		Id int64 `json:"id"`
 	}
 )
+
+// Auth DTOs
+type (
+	RequestRegisterUser struct {
+		Email    string `json:"email"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
+	}
+	ResponseRegisterUser struct {
+		Id int64 `json:"user_id"`
+	}
+)
