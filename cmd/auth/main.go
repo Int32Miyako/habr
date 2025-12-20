@@ -7,6 +7,7 @@ import (
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
+	"habr/internal/auth/core/jwt"
 	"habr/internal/auth/logger"
 	"os"
 	"os/signal"
@@ -26,7 +27,8 @@ func main() {
 	log.Info("Starting auth service")
 
 	userRepo := repositories.NewUserRepository(database.Pool)
-	userService := services.NewUserService(userRepo)
+	jwtManager := jwt.NewJWTManager(cfg)
+	userService := services.NewUserService(userRepo, jwtManager)
 
 	application := app.New()
 	go func() {

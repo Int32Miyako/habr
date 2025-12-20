@@ -7,7 +7,6 @@ import (
 	"habr/protos/gen/go/auth"
 	"log/slog"
 
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 )
 
@@ -39,15 +38,8 @@ func (s *serverAPI) Register(ctx context.Context, req *auth.RegisterRequest) (*a
 		return nil, fmt.Errorf("%s: password is required", op)
 	}
 
-	// Хэширование пароля
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.GetPassword()), bcrypt.DefaultCost)
-	if err != nil {
-		s.log.Error("failed to hash password", slog.String("op", op), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("%s: failed to hash password", op)
-	}
-
 	// Создание пользователя
-	userID, err := s.userService.RegisterUser(ctx, req.GetEmail(), req.GetUsername(), string(passwordHash))
+	userID, err := s.userService.RegisterUser(ctx, req.GetEmail(), req.GetUsername(), req.GetPassword())
 	if err != nil {
 		s.log.Error("failed to register user", slog.String("op", op), slog.String("error", err.Error()))
 		return nil, fmt.Errorf("%s: failed to register user: %w", op, err)
@@ -71,8 +63,14 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 		return nil, fmt.Errorf("%s: password is required", op)
 	}
 
+	id, err := s.userService.LoginUser(ctx, req.GetEmail(), req.GetPassword())
+	if err != nil {
+		s.log.Error("failed to login user", slog.String("op", op), slog.String("error", err.Error()))
+		return nil, fmt.Errorf("%s: failed to login user: %w", op, err)
+	}
+
 	return &auth.LoginResponse{
 		AccessToken: "",
-		UserId:      0,
+		UserId:      id,
 	}, nil
 }

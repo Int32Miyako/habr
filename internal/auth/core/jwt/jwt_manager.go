@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"habr/internal/auth/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -21,11 +22,11 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTManager(secretKey string, accessTokenDuration, refreshTokenDuration time.Duration) *JWTManager {
+func NewJWTManager(cfg *config.Config) *JWTManager {
 	return &JWTManager{
-		secretKey:            secretKey,
-		accessTokenDuration:  accessTokenDuration,
-		refreshTokenDuration: refreshTokenDuration,
+		secretKey:            cfg.SecretKey,
+		accessTokenDuration:  cfg.AccessTokenDuration,
+		refreshTokenDuration: cfg.RefreshTokenDuration,
 	}
 }
 
