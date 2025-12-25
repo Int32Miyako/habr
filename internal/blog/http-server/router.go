@@ -2,14 +2,17 @@ package http_server
 
 import (
 	"habr/internal/blog/core/blog"
-	handlers "habr/internal/blog/http-server/handlers/blog"
+	"habr/internal/blog/grpc/client"
+	authHandlers "habr/internal/blog/http-server/handlers/auth"
+	blogHandlers "habr/internal/blog/http-server/handlers/blog"
+	"habr/internal/blog/http-server/middlewares"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(blogService *blog.Service) http.Handler {
+func NewRouter(blogService *blog.Service, authClient *client.AuthClient) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -18,15 +21,23 @@ func NewRouter(blogService *blog.Service) http.Handler {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/blogs", func(r chi.Router) {
-		r.Get("/", handlers.GetAllBlogs(blogService))
+		r.Use(middlewares.AuthMiddleware(authClient))
 
-		r.Get("/{id}", handlers.GetBlogByID(blogService))
+		r.Get("/", blogHandlers.GetAllBlogs(blogService))
 
-		r.Post("/", handlers.CreateBlog(blogService))
+		r.Get("/{id}", blogHandlers.GetBlogByID(blogService))
 
-		r.Put("/{id}", handlers.UpdateBlog(blogService))
+		r.Post("/", blogHandlers.CreateBlog(blogService))
 
-		r.Delete("/{id}", handlers.DeleteBlog(blogService))
+		r.Put("/{id}", blogHandlers.UpdateBlog(blogService))
+
+		r.Delete("/{id}", blogHandlers.DeleteBlog(blogService))
+	})
+
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/register", authHandlers.RegisterUser(authClient))
+
+		r.Get("/login", authHandlers.LoginUser(authClient))
 	})
 
 	return r
