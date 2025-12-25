@@ -29,16 +29,16 @@ message LoginRequest {
 
 message LoginResponse {
   string access_token = 1;
-  int64 user_id = 2;
+  string refresh_token = 2;
+  int64 user_id = 3;
 }
 
 message RefreshRequest {
   string refresh_token = 1;
 }
-
+// новый рефреш не выдаётся, если протух, требуем новый логин
 message RefreshResponse {
   string access_token = 1;
-  string refresh_token = 2;
 }
 
 message LogoutRequest {

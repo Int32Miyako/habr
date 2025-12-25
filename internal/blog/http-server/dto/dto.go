@@ -29,6 +29,17 @@ type (
 		Password string `json:"password"`
 	}
 	ResponseRegisterUser struct {
-		Id int64 `json:"user_id"`
+		UserId int64 `json:"user_id"`
+	}
+
+	RequestLoginUser struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	ResponseLoginUser struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		UserId       int64  `json:"user_id"`
 	}
 )

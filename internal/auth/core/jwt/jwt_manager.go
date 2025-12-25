@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JWTManager struct {
+type Manager struct {
 	secretKey            string
 	accessTokenDuration  time.Duration
 	refreshTokenDuration time.Duration
@@ -22,8 +22,8 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTManager(cfg *config.Config) *JWTManager {
-	return &JWTManager{
+func NewJWTManager(cfg *config.Config) *Manager {
+	return &Manager{
 		secretKey:            cfg.SecretKey,
 		accessTokenDuration:  cfg.AccessTokenDuration,
 		refreshTokenDuration: cfg.RefreshTokenDuration,
@@ -31,7 +31,7 @@ func NewJWTManager(cfg *config.Config) *JWTManager {
 }
 
 // GenerateAccessToken создает JWT Access Token
-func (m *JWTManager) GenerateAccessToken(userID int64, email string) (string, error) {
+func (m *Manager) GenerateAccessToken(userID int64, email string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
@@ -46,7 +46,7 @@ func (m *JWTManager) GenerateAccessToken(userID int64, email string) (string, er
 }
 
 // GenerateRefreshToken создает случайный Refresh Token
-func (m *JWTManager) GenerateRefreshToken() (string, error) {
+func (m *Manager) GenerateRefreshToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
@@ -55,7 +55,7 @@ func (m *JWTManager) GenerateRefreshToken() (string, error) {
 }
 
 // ValidateAccessToken проверяет и парсит Access Token
-func (m *JWTManager) ValidateAccessToken(tokenString string) (*Claims, error) {
+func (m *Manager) ValidateAccessToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -75,6 +75,6 @@ func (m *JWTManager) ValidateAccessToken(tokenString string) (*Claims, error) {
 }
 
 // GetRefreshTokenExpiration возвращает время истечения Refresh Token
-func (m *JWTManager) GetRefreshTokenExpiration() time.Time {
+func (m *Manager) GetRefreshTokenExpiration() time.Time {
 	return time.Now().Add(m.refreshTokenDuration)
 }
