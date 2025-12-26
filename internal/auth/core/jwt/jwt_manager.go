@@ -47,11 +47,15 @@ func (m *Manager) GenerateAccessToken(userID int64, email string) (string, error
 
 // GenerateRefreshToken создает случайный Refresh Token
 func (m *Manager) GenerateRefreshToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+func (m *Manager) RefreshTokenTTL() time.Duration {
+	return m.refreshTokenDuration
 }
 
 // ValidateAccessToken проверяет и парсит Access Token

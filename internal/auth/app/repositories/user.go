@@ -15,7 +15,7 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{pool: pool}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwordHash, tokenHash string, expiresAt time.Time) (int64, error) {
+func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwordHash string) (int64, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return -1, err
@@ -31,13 +31,17 @@ func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwo
 		return -1, err
 	}
 
-	query = `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`
-	_, err = tx.Exec(ctx, query, userId, tokenHash, expiresAt)
+	err = tx.Commit(ctx)
 	if err != nil {
 		return -1, err
 	}
 
-	err = tx.Commit(ctx)
+	return userId, nil
+}
+
+func (r *UserRepository) CreateRefreshToken(ctx context.Context, userId int64, tokenHash string, expiresAt time.Time) (int64, error) {
+	query := `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`
+	_, err := r.pool.Exec(ctx, query, userId, tokenHash, expiresAt)
 	if err != nil {
 		return -1, err
 	}

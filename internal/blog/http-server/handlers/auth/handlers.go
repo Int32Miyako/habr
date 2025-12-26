@@ -52,7 +52,7 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 
 		err = formatter.RespJSON(200, dto.ResponseLoginUser{
 			AccessToken:  resp.AccessToken,
-			RefreshToken: "", //TODO: add refresh token
+			RefreshToken: resp.RefreshToken,
 			UserId:       resp.UserId,
 		}, w)
 		if err != nil {

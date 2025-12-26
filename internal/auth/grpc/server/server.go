@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"habr/internal/auth/app/services"
+	"habr/internal/blog/http-server/dto"
 	"habr/protos/gen/go/auth"
 	"log/slog"
 
@@ -63,14 +64,19 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 		return nil, fmt.Errorf("%s: password is required", op)
 	}
 
-	id, err := s.userService.LoginUser(ctx, req.GetEmail(), req.GetPassword())
+	user, err := s.userService.LoginUser(ctx, dto.RequestLoginUser{
+		Email:    req.GetEmail(),
+		Password: req.GetPassword(),
+	})
+
 	if err != nil {
 		s.log.Error("failed to login user", slog.String("op", op), slog.String("error", err.Error()))
 		return nil, fmt.Errorf("%s: failed to login user: %w", op, err)
 	}
 
 	return &auth.LoginResponse{
-		AccessToken: "",
-		UserId:      id,
+		AccessToken:  user.AccessToken,
+		RefreshToken: user.RefreshToken,
+		UserId:       user.UserId,
 	}, nil
 }

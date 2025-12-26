@@ -4,6 +4,7 @@ import (
 	"context"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/core/jwt"
+	"habr/internal/blog/http-server/dto"
 	"log"
 	"time"
 
@@ -26,27 +27,35 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 		return -1, err
 	}
 
-	tokenHash, err := s.jwtManager.GenerateRefreshToken()
-	if err != nil {
-		return -1, err
-	}
-	expiresAt := time.Now().Add(30 * 24 * time.Hour) // 30 дней
-	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash), tokenHash, expiresAt)
+	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
 }
 
-func (s *UserService) LoginUser(ctx context.Context, email string, password string) (int64, error) {
-	// Хэширование пароля
-	// passwordHash, err := hashPassword(password)
-
-	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, email)
+func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.ResponseLoginUser, error) {
+	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		return -1, err
+		return dto.ResponseLoginUser{}, err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 
+	refreshToken, err := s.jwtManager.GenerateRefreshToken()
 	if err != nil {
-		return -1, err
+		return dto.ResponseLoginUser{}, err
+	}
+	accessToken, err := s.jwtManager.GenerateAccessToken(userId, user.Email)
+	if err != nil {
+		return dto.ResponseLoginUser{}, err
+	}
+
+	expiresAt := time.Now().Add(s.jwtManager.RefreshTokenTTL() * 24 * time.Hour) // 30 дней
+
+	_, err = s.userRepo.CreateRefreshToken(ctx, userId, refreshToken, expiresAt)
+	if err != nil {
+		return dto.ResponseLoginUser{}, err
 	}
 	log.Print("user_id", userId)
-	return userId, err
+	return dto.ResponseLoginUser{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		UserId:       userId,
+	}, err
 }
