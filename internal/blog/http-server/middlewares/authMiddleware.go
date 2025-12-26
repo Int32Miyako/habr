@@ -8,12 +8,27 @@ import (
 func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Пример проверки токена
 			ctx := r.Context()
-			token := r.Header.Get("Authorization")
-			if token == "" || !authClient.Validate(ctx, token) {
+			accessToken := r.Header.Get("Authorization")
+			if accessToken == "" {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
+			}
+			if !authClient.Validate(ctx, accessToken) {
+				cookie, err := r.Cookie("refresh_token")
+				if err != nil {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				resp, err := authClient.Refresh(ctx, cookie.Value)
+				if err != nil {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				w.Header().Set("X-New-Access-Token", resp.AccessToken)
+				r.Header.Set("Authorization", resp.AccessToken)
 			}
 			next.ServeHTTP(w, r)
 		})

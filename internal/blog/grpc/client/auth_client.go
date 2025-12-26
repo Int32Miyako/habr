@@ -73,3 +73,9 @@ func (c *AuthClient) Validate(ctx context.Context, token string) bool {
 
 	return resp.Valid
 }
+
+func (c *AuthClient) Refresh(ctx context.Context, refreshToken string) (*auth.RefreshResponse, error) {
+	return c.client.Refresh(ctx, &auth.RefreshRequest{
+		RefreshToken: refreshToken,
+	})
+}
