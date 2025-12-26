@@ -25,8 +25,13 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 
 			accessToken := parts[1]
 
-			isValid, _ := authClient.Validate(ctx, accessToken)
-
+			// возвращает bool и int32
+			// error проверяется внутри функции
+			isValid, err := authClient.Validate(ctx, accessToken)
+			if err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 			if !isValid {
 				refreshCookie, err := r.Cookie("refresh_token")
 				if err != nil {

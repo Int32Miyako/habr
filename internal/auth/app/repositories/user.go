@@ -40,13 +40,15 @@ func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwo
 }
 
 func (r *UserRepository) CreateRefreshToken(ctx context.Context, userId int64, tokenHash string, expiresAt time.Time) (int64, error) {
-	query := `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`
-	_, err := r.pool.Exec(ctx, query, userId, tokenHash, expiresAt)
+	query := `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) 
+				VALUES ($1, $2, $3) RETURNING id`
+	var tokenId int64
+	err := r.pool.QueryRow(ctx, query, userId, tokenHash, expiresAt).Scan(&tokenId)
 	if err != nil {
 		return -1, err
 	}
 
-	return userId, nil
+	return tokenId, nil
 }
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (int64, string, error) {
