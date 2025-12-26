@@ -37,23 +37,16 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 func (s *UserService) LoginUser(ctx context.Context, email string, password string) (int64, error) {
 	// Хэширование пароля
 	// passwordHash, err := hashPassword(password)
-	var err error
+
+	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return -1, err
 	}
-	id, lol, err := s.userRepo.GetUserByEmail(ctx, email)
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+
 	if err != nil {
 		return -1, err
 	}
-	log.Print("passwordHash", lol)
-	return id, err
-}
-
-func hashPassword(password string) (string, error) {
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	if err != nil {
-		return "", err
-	}
-
-	return string(passwordHash), nil
+	log.Print("user_id", userId)
+	return userId, err
 }
