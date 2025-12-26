@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/core/jwt"
 	"habr/internal/blog/http-server/dto"
@@ -46,7 +47,7 @@ func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) 
 		return dto.ResponseLoginUser{}, err
 	}
 
-	expiresAt := time.Now().Add(s.jwtManager.RefreshTokenTTL() * 24 * time.Hour) // 30 дней
+	expiresAt := time.Now().Add(s.jwtManager.RefreshTokenTTL())
 
 	_, err = s.userRepo.CreateRefreshToken(ctx, userId, refreshToken, expiresAt)
 	if err != nil {
@@ -58,4 +59,49 @@ func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) 
 		RefreshToken: refreshToken,
 		UserId:       userId,
 	}, err
+}
+
+func (s *UserService) ValidateAccessToken(ctx context.Context, token string) (*jwt.Claims, error) {
+	claims, err := s.jwtManager.ValidateAccessToken(token)
+	if err != nil {
+		return nil, err
+	}
+	return claims, nil
+}
+
+func (s *UserService) RefreshTokens(ctx context.Context, refreshToken string) (string, error) {
+	// Проверяем refresh token в БД
+	userID, expiresAt, err := s.userRepo.GetRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return "", fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	// Проверяем срок действия
+	if time.Now().After(expiresAt) {
+		// Удаляем истекший токен
+		_ = s.userRepo.DeleteRefreshToken(ctx, refreshToken)
+		return "", fmt.Errorf("refresh token expired")
+	}
+
+	// Получаем email пользователя
+	email, err := s.userRepo.GetUserEmailByID(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("user not found: %w", err)
+	}
+
+	// Генерируем новый access token
+	accessToken, err := s.jwtManager.GenerateAccessToken(userID, email)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	return accessToken, nil
+}
+
+func (s *UserService) Logout(ctx context.Context, refreshToken string) error {
+	err := s.userRepo.DeleteRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return fmt.Errorf("failed to delete refresh token: %w", err)
+	}
+	return nil
 }

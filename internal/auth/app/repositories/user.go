@@ -61,3 +61,34 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (int6
 
 	return userID, passwordHash, nil
 }
+
+func (r *UserRepository) GetRefreshToken(ctx context.Context, tokenHash string) (int64, time.Time, error) {
+	query := `SELECT user_id, expires_at FROM refresh_tokens WHERE token_hash = $1`
+
+	var userID int64
+	var expiresAt time.Time
+	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(&userID, &expiresAt)
+	if err != nil {
+		return -1, time.Time{}, err
+	}
+
+	return userID, expiresAt, nil
+}
+
+func (r *UserRepository) DeleteRefreshToken(ctx context.Context, tokenHash string) error {
+	query := `DELETE FROM refresh_tokens WHERE token_hash = $1`
+	_, err := r.pool.Exec(ctx, query, tokenHash)
+	return err
+}
+
+func (r *UserRepository) GetUserEmailByID(ctx context.Context, userID int64) (string, error) {
+	query := `SELECT email FROM users WHERE id = $1`
+
+	var email string
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&email)
+	if err != nil {
+		return "", err
+	}
+
+	return email, nil
+}

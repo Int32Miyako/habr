@@ -68,14 +68,15 @@ func (m *Manager) ValidateAccessToken(tokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	claims, ok := token.Claims.(*Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims type")
 	}
 
-	return nil, fmt.Errorf("invalid token")
+	return claims, nil
 }
 
 // GetRefreshTokenExpiration возвращает время истечения Refresh Token
