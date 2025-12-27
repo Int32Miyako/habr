@@ -60,9 +60,8 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 		})
 
 		err = formatter.RespJSON(200, dto.ResponseLoginUser{
-			AccessToken:  resp.AccessToken,
-			RefreshToken: resp.RefreshToken,
-			UserId:       resp.UserId,
+			AccessToken: resp.AccessToken,
+			UserId:      resp.UserId,
 		}, w)
 		if err != nil {
 			log.Println(err)

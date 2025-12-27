@@ -45,12 +45,7 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 					return
 				}
 
-				http.SetCookie(w, &http.Cookie{
-					Name:     "access_token",
-					Value:    resp.AccessToken,
-					HttpOnly: true,
-					Path:     "/",
-				})
+				r.Header.Set("Authorization", "Bearer "+resp.AccessToken)
 			}
 
 			next.ServeHTTP(w, r)

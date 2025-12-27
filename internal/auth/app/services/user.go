@@ -31,33 +31,33 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
 }
 
-func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.ResponseLoginUser, error) {
+func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.LoginUserDto, error) {
 	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		return dto.ResponseLoginUser{}, err
+		return dto.LoginUserDto{}, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return dto.ResponseLoginUser{}, err
+		return dto.LoginUserDto{}, err
 	}
 
 	refreshToken, err := s.jwtManager.GenerateRefreshToken()
 	if err != nil {
-		return dto.ResponseLoginUser{}, err
+		return dto.LoginUserDto{}, err
 	}
 	accessToken, err := s.jwtManager.GenerateAccessToken(userId, user.Email)
 	if err != nil {
-		return dto.ResponseLoginUser{}, err
+		return dto.LoginUserDto{}, err
 	}
 
 	expiresAt := time.Now().Add(s.jwtManager.RefreshTokenTTL())
 
 	_, err = s.userRepo.CreateRefreshToken(ctx, userId, refreshToken, expiresAt)
 	if err != nil {
-		return dto.ResponseLoginUser{}, err
+		return dto.LoginUserDto{}, err
 	}
 	log.Print("user_id", userId)
-	return dto.ResponseLoginUser{
+	return dto.LoginUserDto{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		UserId:       userId,

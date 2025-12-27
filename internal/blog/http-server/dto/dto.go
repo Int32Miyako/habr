@@ -37,9 +37,14 @@ type (
 		Password string `json:"password"`
 	}
 
+	LoginUserDto struct {
+		AccessToken  string
+		RefreshToken string
+		UserId       int64
+	}
+
 	ResponseLoginUser struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		UserId       int64  `json:"user_id"`
+		AccessToken string `json:"access_token"`
+		UserId      int64  `json:"user_id"`
 	}
 )
