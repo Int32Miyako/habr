@@ -50,6 +50,15 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 			return
 		}
 
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    resp.RefreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteStrictMode,
+			Secure:   true, // обязательно в проде (https)
+		})
+
 		err = formatter.RespJSON(200, dto.ResponseLoginUser{
 			AccessToken:  resp.AccessToken,
 			RefreshToken: resp.RefreshToken,
