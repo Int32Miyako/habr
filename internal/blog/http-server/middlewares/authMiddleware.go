@@ -45,7 +45,8 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 					return
 				}
 
-				r.Header.Set("Authorization", "Bearer "+resp.AccessToken)
+				// Отправляем новый access token клиенту через заголовок ответа
+				w.Header().Set("X-New-Access-Token", resp.AccessToken)
 			}
 
 			next.ServeHTTP(w, r)
