@@ -61,15 +61,21 @@ func (c *AuthClient) GetClient() auth.AuthClient {
 	return c.client
 }
 
-func (c *AuthClient) Validate(ctx context.Context, token string) bool {
+func (c *AuthClient) Validate(ctx context.Context, token string) (bool, error) {
 	resp, err := c.client.Validate(ctx, &auth.ValidateRequest{
 		AccessToken: token,
 	})
 
 	if err != nil {
-		log.Println(err)
-		return false
+		log.Println("validate error:", err)
+		return false, err
 	}
 
-	return resp.Valid
+	return resp.Valid, err
+}
+
+func (c *AuthClient) Refresh(ctx context.Context, refreshToken string) (*auth.RefreshResponse, error) {
+	return c.client.Refresh(ctx, &auth.RefreshRequest{
+		RefreshToken: refreshToken,
+	})
 }
