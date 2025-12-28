@@ -37,7 +37,7 @@ func NewRouter(blogService *blog.Service, authClient *client.AuthClient) http.Ha
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", authHandlers.RegisterUser(authClient))
 
-		r.Get("/login", authHandlers.LoginUser(authClient))
+		r.Post("/login", authHandlers.LoginUser(authClient))
 	})
 
 	return r
