@@ -13,14 +13,12 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
+				SendUnauthorized(w)
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
+				SendUnauthorized(w)
 			}
 
 			accessToken := parts[1]
@@ -29,27 +27,30 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 			// error проверяется внутри функции
 			isValid, err := authClient.Validate(ctx, accessToken)
 			if err != nil {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
+				SendUnauthorized(w)
 			}
 			if !isValid {
 				refreshCookie, err := r.Cookie("refresh_token")
 				if err != nil {
-					http.Error(w, "Unauthorized", http.StatusUnauthorized)
-					return
+					SendUnauthorized(w)
 				}
 
 				resp, err := authClient.Refresh(ctx, refreshCookie.Value)
 				if err != nil {
-					http.Error(w, "Unauthorized", http.StatusUnauthorized)
-					return
+					SendUnauthorized(w)
 				}
 
 				// Отправляем новый access token клиенту через заголовок ответа
 				w.Header().Set("X-New-Access-Token", resp.AccessToken)
+				SendUnauthorized(w)
 			}
 
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func SendUnauthorized(w http.ResponseWriter) {
+	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	return
 }
