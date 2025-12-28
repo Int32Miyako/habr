@@ -25,7 +25,7 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 	// Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
@@ -38,7 +38,7 @@ func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) 
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		return dto.LoginUserDto{}, fmt.Errorf("invalid email or password: %w", err)
 	}
 
 	refreshToken, err := s.jwtManager.GenerateRefreshToken()
@@ -56,12 +56,12 @@ func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) 
 	if err != nil {
 		return dto.LoginUserDto{}, err
 	}
-	log.Print("user_id", userId)
+	log.Print("user_id: ", userId)
 	return dto.LoginUserDto{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		UserId:       userId,
-	}, err
+	}, nil
 }
 
 func (s *UserService) ValidateAccessToken(ctx context.Context, token string) (*jwt.Claims, error) {

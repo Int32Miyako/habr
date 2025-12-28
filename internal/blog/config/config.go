@@ -52,8 +52,8 @@ func MustLoad() *Config {
 
 	return &Config{
 		Database: &Database{
-			Host:     os.Getenv("DB_HOST"),
-			Port:     os.Getenv("DB_PORT"),
+			Host:     os.Getenv("BLOG_DB_HOST"),
+			Port:     os.Getenv("BLOG_DB_PORT"),
 			Username: os.Getenv("DB_USER"),
 			Password: os.Getenv("DB_PASSWORD"),
 			DBName:   os.Getenv("BLOG_DB_NAME"),

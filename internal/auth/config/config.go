@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"habr/internal/auth/core/constants"
 	"os"
 	"strconv"
 	"time"
@@ -45,23 +45,23 @@ func MustLoad() *Config {
 
 	timeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
 	if err != nil {
-		log.Fatal("Error parsing HTTP_TIMEOUT")
+		timeout = constants.DefaultGRPCTimeoutSeconds
 	}
 
 	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
 	if err != nil {
-		accessTokenDuration = 15 // по умолчанию 15 минут
+		accessTokenDuration = constants.DefaultAccessTokenDurationMinutes
 	}
 
 	refreshTokenDuration, err := strconv.Atoi(os.Getenv("JWT_REFRESH_TOKEN_DURATION_DAYS"))
 	if err != nil {
-		refreshTokenDuration = 30 // по умолчанию 30 дней
+		refreshTokenDuration = constants.DefaultRefreshTokenDurationDays
 	}
 
 	return &Config{
 		Database: &Database{
-			Host:     os.Getenv("DB_HOST"),
-			Port:     os.Getenv("DB_PORT"),
+			Host:     os.Getenv("AUTH_DB_HOST"),
+			Port:     os.Getenv("AUTH_DB_PORT"),
 			Username: os.Getenv("DB_USER"),
 			Password: os.Getenv("DB_PASSWORD"),
 			DBName:   os.Getenv("AUTH_DB_NAME"),

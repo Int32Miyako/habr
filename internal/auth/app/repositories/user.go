@@ -18,7 +18,7 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwordHash string) (int64, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	defer func() {
 		_ = tx.Rollback(ctx)
@@ -28,12 +28,12 @@ func (r *UserRepository) CreateUser(ctx context.Context, email, username, passwo
 	var userId int64
 	err = tx.QueryRow(ctx, query, username, passwordHash, email).Scan(&userId)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return userId, nil
@@ -45,7 +45,7 @@ func (r *UserRepository) CreateRefreshToken(ctx context.Context, userId int64, t
 	var tokenId int64
 	err := r.pool.QueryRow(ctx, query, userId, tokenHash, expiresAt).Scan(&tokenId)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	return tokenId, nil
@@ -58,7 +58,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (int6
 	var passwordHash string
 	err := r.pool.QueryRow(ctx, query, email).Scan(&userID, &passwordHash)
 	if err != nil {
-		return -1, "", err
+		return 0, "", err
 	}
 
 	return userID, passwordHash, nil
@@ -71,7 +71,7 @@ func (r *UserRepository) GetRefreshToken(ctx context.Context, tokenHash string) 
 	var expiresAt time.Time
 	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(&userID, &expiresAt)
 	if err != nil {
-		return -1, time.Time{}, err
+		return 0, time.Time{}, err
 	}
 
 	return userID, expiresAt, nil
