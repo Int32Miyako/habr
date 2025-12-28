@@ -76,6 +76,10 @@ func (m *Manager) ValidateAccessToken(tokenString string) (*Claims, error) {
 		return nil, fmt.Errorf("invalid token claims type")
 	}
 
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
 	return claims, nil
 }
 
