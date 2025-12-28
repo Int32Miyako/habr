@@ -16,16 +16,16 @@ func RegisterUser(client *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(http.StatusBadRequest, map[string]string{"error": "Internal Server Error"}, w)
 			return
 		}
 		resp, err := client.Register(ctx, req.Email, req.Name, req.Password)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()}, w)
 			return
 		}
 
-		err = formatter.RespJSON(200, dto.ResponseRegisterUser{UserId: resp.UserId}, w)
+		err = formatter.RespJSON(http.StatusCreated, dto.ResponseRegisterUser{UserId: resp.UserId}, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -39,14 +39,14 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(400, map[string]string{"error": "Bad Request"}, w)
+			_ = formatter.RespJSON(http.StatusBadRequest, map[string]string{"error": "Bad Request"}, w)
 			return
 		}
 
 		resp, err := authClient.Login(ctx, req.Email, req.Password)
 
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespJSON(http.StatusUnauthorized, map[string]string{"error": "Login Failed"}, w)
 			return
 		}
 
@@ -59,7 +59,7 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 			Secure:   true, // обязательно в проде (https)
 		})
 
-		err = formatter.RespJSON(200, dto.ResponseLoginUser{
+		err = formatter.RespJSON(http.StatusOK, dto.ResponseLoginUser{
 			AccessToken: resp.AccessToken,
 			UserId:      resp.UserId,
 		}, w)
