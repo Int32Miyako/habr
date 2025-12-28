@@ -14,11 +14,13 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				SendUnauthorized(w)
+				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
 				SendUnauthorized(w)
+				return
 			}
 
 			accessToken := parts[1]
@@ -28,21 +30,25 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 			isValid, err := authClient.Validate(ctx, accessToken)
 			if err != nil {
 				SendUnauthorized(w)
+				return
 			}
 			if !isValid {
 				refreshCookie, err := r.Cookie("refresh_token")
 				if err != nil {
 					SendUnauthorized(w)
+					return
 				}
 
 				resp, err := authClient.Refresh(ctx, refreshCookie.Value)
 				if err != nil {
 					SendUnauthorized(w)
+					return
 				}
 
 				// Отправляем новый access token клиенту через заголовок ответа
 				w.Header().Set("X-New-Access-Token", resp.AccessToken)
 				SendUnauthorized(w)
+				return
 			}
 
 			next.ServeHTTP(w, r)
@@ -52,5 +58,4 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 
 func SendUnauthorized(w http.ResponseWriter) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	return
 }
