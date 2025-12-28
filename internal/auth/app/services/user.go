@@ -25,7 +25,7 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 	// Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("ошибка регистрации пользователя: %w", err)
 	}
 
 	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
@@ -43,18 +43,19 @@ func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) 
 
 	refreshToken, err := s.jwtManager.GenerateRefreshToken()
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		return dto.LoginUserDto{}, fmt.Errorf("ошибка генерации refresh token: %w", err)
 	}
+
 	accessToken, err := s.jwtManager.GenerateAccessToken(userId, user.Email)
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		return dto.LoginUserDto{}, fmt.Errorf("ошибка генерации access token: %w", err)
 	}
 
 	expiresAt := time.Now().Add(s.jwtManager.RefreshTokenTTL())
 
 	_, err = s.userRepo.CreateRefreshToken(ctx, userId, refreshToken, expiresAt)
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		return dto.LoginUserDto{}, fmt.Errorf("ошибка создания refresh token в бд: %w", err)
 	}
 	log.Print("user_id: ", userId)
 	return dto.LoginUserDto{
@@ -68,7 +69,7 @@ func (s *UserService) ValidateAccessToken(ctx context.Context, token string) (*j
 
 	claims, err := s.jwtManager.ValidateAccessToken(token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ошибка ValidateAccessToken: %w", err)
 	}
 	return claims, nil
 }
