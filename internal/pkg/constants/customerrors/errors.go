@@ -1,4 +1,4 @@
-package constants
+package customerrors
 
 import "errors"
 
@@ -10,4 +10,7 @@ var (
 )
 
 // Auth GRPC errors
-var ()
+
+var (
+	ErrGenerateAccessToken = errors.New("error generating access token")
+)

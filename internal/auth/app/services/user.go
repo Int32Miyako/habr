@@ -6,7 +6,9 @@ import (
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/core/jwt"
 	"habr/internal/blog/http-server/dto"
+	"habr/internal/pkg/constants/customerrors"
 	"log"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -25,20 +27,29 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 	// Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, fmt.Errorf("ошибка регистрации пользователя: %w", err)
+		return 0, customerrors.ErrInternalServer
 	}
 
-	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
+	userID, err := s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
+	if err != nil {
+		// Проверяем на ошибку дубликата (например, уникальный email или имя пользователя)
+		if isDuplicateErr(err) {
+			return 0, customerrors.ErrUserAlreadyExists
+		}
+		return 0, customerrors.ErrInternalServer
+	}
+
+	return userID, nil
 }
 
 func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.LoginUserDto, error) {
 	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		return dto.LoginUserDto{}, fmt.Errorf("ошибка получения пользователя по его почте: %w", err)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return dto.LoginUserDto{}, fmt.Errorf("invalid email or password: %w", err)
+		return dto.LoginUserDto{}, customerrors.ErrInvalidCredentials
 	}
 
 	refreshToken, err := s.jwtManager.GenerateRefreshToken()
@@ -109,4 +120,13 @@ func (s *UserService) Logout(ctx context.Context, refreshToken string) error {
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 	return nil
+}
+
+// isDuplicateErr определяет, является ли ошибка ошибкой дубликата (уникальный email)
+func isDuplicateErr(err error) bool {
+	// Пример для PostgreSQL: "pq: duplicate key value violates unique constraint"
+	return err != nil && ( // можно добавить другие проверки по необходимости
+	strings.Contains(err.Error(), "duplicate key value") ||
+		strings.Contains(err.Error(), "UNIQUE constraint failed") ||
+		strings.Contains(err.Error(), "уже существует"))
 }

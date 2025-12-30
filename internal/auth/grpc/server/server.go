@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"habr/internal/auth/app/services"
-	"habr/internal/auth/core/constants"
 	"habr/internal/blog/http-server/dto"
+	"habr/internal/pkg/constants/customerrors"
 	"habr/protos/gen/go/auth"
 	"log/slog"
 
@@ -33,20 +34,27 @@ func (s *serverAPI) Register(ctx context.Context, req *auth.RegisterRequest) (*a
 
 	// Валидация входных данных
 	if req.GetEmail() == "" {
-		return nil, fmt.Errorf("%s: email is required", op)
+		return nil, status.Errorf(codes.InvalidArgument, "%s: email is required", op)
 	}
 	if req.GetUsername() == "" {
-		return nil, fmt.Errorf("%s: username is required", op)
+		return nil, status.Errorf(codes.InvalidArgument, "%s: username is required", op)
 	}
 	if req.GetPassword() == "" {
-		return nil, fmt.Errorf("%s: password is required", op)
+		return nil, status.Errorf(codes.InvalidArgument, "%s: password is required", op)
 	}
 
 	// Создание пользователя
 	userID, err := s.userService.RegisterUser(ctx, req.GetEmail(), req.GetUsername(), req.GetPassword())
 	if err != nil {
 		s.log.Error("failed to register user", slog.String("op", op), slog.String("error", err.Error()))
-		return nil, status.Errorf(codes.Internal, constants.ErrInternalServer.Error())
+		switch {
+		case errors.Is(err, customerrors.ErrUserAlreadyExists):
+			return nil, status.Errorf(codes.AlreadyExists, customerrors.ErrUserAlreadyExists.Error())
+		case errors.Is(err, customerrors.ErrInvalidCredentials):
+			return nil, status.Errorf(codes.InvalidArgument, customerrors.ErrInvalidCredentials.Error())
+		default:
+			return nil, status.Errorf(codes.Internal, customerrors.ErrInternalServer.Error())
+		}
 	}
 
 	s.log.Info("user registered", slog.String("op", op), slog.Int64("user_id", userID))
@@ -60,11 +68,11 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 	const op = "grpc.Login"
 
 	if req.GetEmail() == "" {
-		return nil, fmt.Errorf("%s: email is required", op)
+		return nil, status.Errorf(codes.InvalidArgument, "%s: email is required", op)
 	}
 
 	if req.GetPassword() == "" {
-		return nil, fmt.Errorf("%s: password is required", op)
+		return nil, status.Errorf(codes.InvalidArgument, "%s: password is required", op)
 	}
 
 	user, err := s.userService.LoginUser(ctx, dto.RequestLoginUser{
@@ -74,7 +82,12 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 
 	if err != nil {
 		s.log.Error("failed to login user", slog.String("op", op), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("%s: failed to login user: %w", op, err)
+		switch {
+		case errors.Is(err, customerrors.ErrInvalidCredentials):
+			return nil, status.Errorf(codes.Unauthenticated, customerrors.ErrInvalidCredentials.Error())
+		default:
+			return nil, status.Errorf(codes.Internal, "%s: failed to login user %s", op, err.Error())
+		}
 	}
 
 	return &auth.LoginResponse{
