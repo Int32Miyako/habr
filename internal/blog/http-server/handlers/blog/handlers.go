@@ -25,7 +25,6 @@ func GetAllBlogs(blogService *blog.Service) http.HandlerFunc {
 			log.Println(err)
 		}
 	}
-
 }
 
 func GetBlogByID(blogService *blog.Service) http.HandlerFunc {
@@ -34,13 +33,13 @@ func GetBlogByID(blogService *blog.Service) http.HandlerFunc {
 
 		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
-			http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+			_ = formatter.RespBadRequest("Invalid blog ID", w)
 			return
 		}
 		b, err := blogService.GetBlog(ctx, id)
 		if err != nil {
 			log.Println(err)
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespInternalError(w)
 		}
 		err = formatter.RespJSON(200, b, w)
 		if err != nil {
@@ -55,18 +54,18 @@ func CreateBlog(blogService *blog.Service) http.HandlerFunc {
 		req := dto.RequestCreateBlog{}
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
+			_ = formatter.RespBadRequest("Invalid request body", w)
 			return
 		}
 
 		id, err := blogService.CreateBlog(ctx, req.Name)
 		if err != nil {
 			log.Println(err)
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespInternalError(w)
 			return
 		}
 
-		err = formatter.RespJSON(200, map[string]int64{"id": id}, w)
+		err = formatter.RespJSON(200, dto.ResponseCreateBlog{Id: id}, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -85,14 +84,14 @@ func UpdateBlog(blogService *blog.Service) http.HandlerFunc {
 		req := dto.RequestUpdateBlog{}
 		err = json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Invalid Json"}, w)
+			_ = formatter.RespBadRequest("Invalid request body", w)
 			return
 		}
 
 		id, err = blogService.UpdateBlog(ctx, req.Name, id)
 		if err != nil {
 			log.Println(err)
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespInternalError(w)
 			return
 		}
 

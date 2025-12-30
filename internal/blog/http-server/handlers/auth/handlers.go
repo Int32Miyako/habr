@@ -16,12 +16,13 @@ func RegisterUser(client *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(http.StatusBadRequest, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
 		resp, err := client.Register(ctx, req.Email, req.Name, req.Password)
 		if err != nil {
-			_ = formatter.RespJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()}, w)
+			status := formatter.ErrorToStatus(err)
+			_ = formatter.RespError(status, err.Error(), w)
 			return
 		}
 
@@ -39,14 +40,15 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(http.StatusBadRequest, map[string]string{"error": "Bad Request"}, w)
+			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
 
 		resp, err := authClient.Login(ctx, req.Email, req.Password)
 
 		if err != nil {
-			_ = formatter.RespJSON(http.StatusUnauthorized, map[string]string{"error": "Login Failed"}, w)
+			status := formatter.ErrorToStatus(err)
+			_ = formatter.RespError(status, err.Error(), w)
 			return
 		}
 
