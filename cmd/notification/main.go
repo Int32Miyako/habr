@@ -1,11 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"habr/db/notification"
 	"habr/internal/notification/config"
+	"habr/internal/pkg/logger"
 )
 
 func main() {
 	cfg := config.MustLoad()
-	fmt.Println(cfg.GRPC)
+
+	notification.MustInitialize(cfg)
+
+	log := logger.New()
+	log.Info("Starting notification service")
 }

@@ -1,2 +1,3 @@
 CREATE DATABASE auth_db;
 CREATE DATABASE blog_db;
+CREATE DATABASE notification_db;

@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	DB         *Database
+	Database   *Database
 	GRPC       *GRPCServer
 	AuthClient *AuthClient
 }
@@ -40,27 +40,33 @@ func MustLoad() *Config {
 		log.Println(".env not found, using system env")
 	}
 
+	// Database config
 	username := os.Getenv("NOTIFICATION_DB_USER")
 	if username == "" {
 		log.Fatal("NOTIFICATION_DB_USER must be set")
 	}
+
 	password := os.Getenv("NOTIFICATION_DB_PASSWORD")
 	if password == "" {
 		log.Fatalf("NOTIFICATION_DB_PASSWORD must be set")
 	}
+
 	dbHost := os.Getenv("NOTIFICATION_DB_HOST")
 	if dbHost == "" {
 		log.Fatal("NOTIFICATION_DB_HOST must be set")
 	}
+
 	dbPort := os.Getenv("NOTIFICATION_DB_PORT")
 	if dbPort == "" {
 		log.Fatal("NOTIFICATION_DB_PORT must be set")
 	}
+
 	dbName := os.Getenv("NOTIFICATION_DB_NAME")
 	if dbName == "" {
 		log.Fatalf("NOTIFICATION_DB_NAME must be set")
 	}
 
+	// Grpc notigication server config
 	grpcPort := os.Getenv("NOTIFICATION_GRPC_SERVER_PORT")
 	if grpcPort == "" {
 		log.Fatal("NOTIFICATION_GRPC_PORT must be set")
@@ -70,6 +76,7 @@ func MustLoad() *Config {
 	if timeoutEnv == "" {
 		log.Fatal("NOTIFICATION_GRPC_TIMEOUT must be set")
 	}
+
 	timeout, err := strconv.Atoi(timeoutEnv)
 	if err != nil || timeout <= 0 {
 		log.Fatal("NOTIFICATION_GRPC_TIMEOUT must be positive integer")
@@ -90,13 +97,14 @@ func MustLoad() *Config {
 	if grpcAuthClientHost == "" {
 		log.Fatal("NOTIFICATION_GRPC_AUTH_CLIENT_HOST must be set")
 	}
+
 	grpcAuthClientPort := os.Getenv("NOTIFICATION_GRPC_AUTH_CLIENT_PORT")
 	if grpcAuthClientPort == "" {
 		log.Fatal("NOTIFICATION_GRPC_AUTH_CLIENT_PORT must be set")
 	}
 
 	return &Config{
-		DB: &Database{
+		Database: &Database{
 			Username: username,
 			Password: password,
 			Host:     dbHost,
