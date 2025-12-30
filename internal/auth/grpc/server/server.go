@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"habr/internal/auth/app/services"
+	"habr/internal/auth/core/constants"
 	"habr/internal/blog/http-server/dto"
 	"habr/protos/gen/go/auth"
 	"log/slog"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type serverAPI struct {
@@ -43,7 +46,7 @@ func (s *serverAPI) Register(ctx context.Context, req *auth.RegisterRequest) (*a
 	userID, err := s.userService.RegisterUser(ctx, req.GetEmail(), req.GetUsername(), req.GetPassword())
 	if err != nil {
 		s.log.Error("failed to register user", slog.String("op", op), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("%s: failed to register user: %w", op, err)
+		return nil, status.Errorf(codes.Internal, constants.ErrInternalServer.Error())
 	}
 
 	s.log.Info("user registered", slog.String("op", op), slog.Int64("user_id", userID))
@@ -131,12 +134,6 @@ func (s *serverAPI) Logout(ctx context.Context, req *auth.LogoutRequest) (*auth.
 	if req.GetAccessToken() == "" {
 		return nil, fmt.Errorf("%s: access token is required", op)
 	}
-
-	// Валидируем access token, чтобы получить user_id и удалить все его refresh tokens
-	// Или можно принимать refresh token напрямую
-	// В данном случае по proto используется access_token, что не совсем корректно
-	// Лучше передавать refresh_token для logout
-	// Но сделаем по текущей схеме - просто вернем success
 
 	s.log.Info("user logged out", slog.String("op", op))
 
