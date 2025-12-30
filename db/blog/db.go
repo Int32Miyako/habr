@@ -8,18 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const (
-	HOST = "localhost"
-	PORT = 5432
-)
-
 type Database struct {
 	Pool *pgxpool.Pool
 }
 
 func Initialize(ctx context.Context, cfg *config.Config) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		HOST, PORT, cfg.Username, cfg.Password, cfg.DBName)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, cfg.Database.Password, cfg.Database.DBName)
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err

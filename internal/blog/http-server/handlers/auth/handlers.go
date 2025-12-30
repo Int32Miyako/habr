@@ -16,16 +16,17 @@ func RegisterUser(client *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
 		resp, err := client.Register(ctx, req.Email, req.Name, req.Password)
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			status := formatter.ErrorToStatus(err)
+			_ = formatter.RespError(status, err.Error(), w)
 			return
 		}
 
-		err = formatter.RespJSON(200, dto.ResponseRegisterUser{UserId: resp.UserId}, w)
+		err = formatter.RespJSON(http.StatusCreated, dto.ResponseRegisterUser{UserId: resp.UserId}, w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -39,21 +40,30 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			_ = formatter.RespJSON(400, map[string]string{"error": "Bad Request"}, w)
+			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
 
 		resp, err := authClient.Login(ctx, req.Email, req.Password)
 
 		if err != nil {
-			_ = formatter.RespJSON(500, map[string]string{"error": "Internal Server Error"}, w)
+			status := formatter.ErrorToStatus(err)
+			_ = formatter.RespError(status, err.Error(), w)
 			return
 		}
 
-		err = formatter.RespJSON(200, dto.ResponseLoginUser{
-			AccessToken:  resp.AccessToken,
-			RefreshToken: "", //TODO: add refresh token
-			UserId:       resp.UserId,
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    resp.RefreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteStrictMode,
+			Secure:   true, // обязательно в проде (https)
+		})
+
+		err = formatter.RespJSON(http.StatusOK, dto.ResponseLoginUser{
+			AccessToken: resp.AccessToken,
+			UserId:      resp.UserId,
 		}, w)
 		if err != nil {
 			log.Println(err)
