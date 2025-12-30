@@ -45,7 +45,10 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.LoginUserDto, error) {
 	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		return dto.LoginUserDto{}, fmt.Errorf("ошибка получения пользователя по его почте: %w", err)
+		if isNotFoundErr(err) {
+			return dto.LoginUserDto{}, customerrors.ErrUserNotFound
+		}
+		return dto.LoginUserDto{}, customerrors.ErrInternalServer
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
@@ -129,4 +132,8 @@ func isDuplicateErr(err error) bool {
 	strings.Contains(err.Error(), "duplicate key value") ||
 		strings.Contains(err.Error(), "UNIQUE constraint failed") ||
 		strings.Contains(err.Error(), "уже существует"))
+}
+
+func isNotFoundErr(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "no rows in result set")
 }

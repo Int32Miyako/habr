@@ -85,6 +85,8 @@ func (s *serverAPI) Login(ctx context.Context, req *auth.LoginRequest) (*auth.Lo
 		switch {
 		case errors.Is(err, customerrors.ErrInvalidCredentials):
 			return nil, status.Errorf(codes.Unauthenticated, customerrors.ErrInvalidCredentials.Error())
+		case errors.Is(err, customerrors.ErrUserNotFound):
+			return nil, status.Errorf(codes.NotFound, customerrors.ErrUserNotFound.Error())
 		default:
 			return nil, status.Errorf(codes.Internal, "%s: failed to login user %s", op, err.Error())
 		}
