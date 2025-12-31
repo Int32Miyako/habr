@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"habr/internal/auth/app/services"
-	"habr/internal/blog/http-server/dto"
+	"habr/internal/blog/http/dto"
 	"habr/internal/pkg/constants/customerrors"
 	"habr/protos/gen/go/auth"
 	"log/slog"

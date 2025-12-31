@@ -6,7 +6,7 @@ import (
 	"habr/internal/blog/config"
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/grpc/client"
-	"habr/internal/blog/http-server"
+	httpserver "habr/internal/blog/http"
 	"log"
 	"net/http"
 )
@@ -24,12 +24,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}
-	defer authClient.Close()
+	defer func() {
+		if err := authClient.Close(); err != nil {
+			log.Printf("failed to close auth client: %v", err)
+		}
+	}()
 
 	blogRepository := blog.NewRepository(database.Pool)
 	blogService := blog.NewService(blogRepository)
 
-	router := http_server.NewRouter(blogService, authClient)
+	router := httpserver.NewRouter(blogService, authClient)
 
 	log.Println("listening on :8080")
 	err = http.ListenAndServe(":8080", router)

@@ -2,15 +2,18 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/core/jwt"
-	"habr/internal/blog/http-server/dto"
+	"habr/internal/blog/http/dto"
 	"habr/internal/pkg/constants/customerrors"
+	"habr/internal/pkg/constants/dbcodes"
 	"log"
-	"strings"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,8 +26,8 @@ func NewUserService(repo *repositories.UserRepository, jwt *jwt.Manager) *UserSe
 	return &UserService{userRepo: repo, jwtManager: jwt}
 }
 
+// RegisterUser создаёт хеш пароля, проверяет уникальность email и сохраняет пользователя в БД
 func (s *UserService) RegisterUser(ctx context.Context, email, username, password string) (int64, error) {
-	// Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return 0, customerrors.ErrInternalServer
@@ -32,7 +35,6 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 
 	userID, err := s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
 	if err != nil {
-		// Проверяем на ошибку дубликата (например, уникальный email или имя пользователя)
 		if isDuplicateErr(err) {
 			return 0, customerrors.ErrUserAlreadyExists
 		}
@@ -127,13 +129,14 @@ func (s *UserService) Logout(ctx context.Context, refreshToken string) error {
 
 // isDuplicateErr определяет, является ли ошибка ошибкой дубликата (уникальный email)
 func isDuplicateErr(err error) bool {
-	// Пример для PostgreSQL: "pq: duplicate key value violates unique constraint"
-	return err != nil && ( // можно добавить другие проверки по необходимости
-	strings.Contains(err.Error(), "duplicate key value") ||
-		strings.Contains(err.Error(), "UNIQUE constraint failed") ||
-		strings.Contains(err.Error(), "уже существует"))
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == dbcodes.PostgresUniqueViolationCode
+	}
+
+	return false
 }
 
 func isNotFoundErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "no rows in result set")
+	return errors.Is(err, sql.ErrNoRows)
 }

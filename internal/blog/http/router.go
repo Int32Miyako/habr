@@ -1,11 +1,11 @@
-package http_server
+package http
 
 import (
 	"habr/internal/blog/core/blog"
 	"habr/internal/blog/grpc/client"
-	authHandlers "habr/internal/blog/http-server/handlers/auth"
-	blogHandlers "habr/internal/blog/http-server/handlers/blog"
-	"habr/internal/blog/http-server/middlewares"
+	authHandlers "habr/internal/blog/http/handlers/auth"
+	blogHandlers "habr/internal/blog/http/handlers/blog"
+	"habr/internal/blog/http/middlewares"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"

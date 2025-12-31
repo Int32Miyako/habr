@@ -3,7 +3,7 @@ package blog
 import (
 	"encoding/json"
 	"habr/internal/blog/core/blog"
-	"habr/internal/blog/http-server/dto"
+	"habr/internal/blog/http/dto"
 	"habr/internal/pkg/formatter"
 	"log"
 	"net/http"
