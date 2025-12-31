@@ -2,13 +2,18 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/core/jwt"
-	"habr/internal/blog/http-server/dto"
+	"habr/internal/blog/http/dto"
+	"habr/internal/pkg/constants/customerrors"
+	"habr/internal/pkg/constants/dbcodes"
 	"log"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,24 +26,35 @@ func NewUserService(repo *repositories.UserRepository, jwt *jwt.Manager) *UserSe
 	return &UserService{userRepo: repo, jwtManager: jwt}
 }
 
+// RegisterUser создаёт хеш пароля, проверяет уникальность email и сохраняет пользователя в БД
 func (s *UserService) RegisterUser(ctx context.Context, email, username, password string) (int64, error) {
-	// Хэширование пароля
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, fmt.Errorf("ошибка регистрации пользователя: %w", err)
+		return 0, customerrors.ErrInternalServer
 	}
 
-	return s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
+	userID, err := s.userRepo.CreateUser(ctx, email, username, string(passwordHash))
+	if err != nil {
+		if isDuplicateErr(err) {
+			return 0, customerrors.ErrUserAlreadyExists
+		}
+		return 0, customerrors.ErrInternalServer
+	}
+
+	return userID, nil
 }
 
 func (s *UserService) LoginUser(ctx context.Context, user dto.RequestLoginUser) (dto.LoginUserDto, error) {
 	userId, hashedPassword, err := s.userRepo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		return dto.LoginUserDto{}, err
+		if isNotFoundErr(err) {
+			return dto.LoginUserDto{}, customerrors.ErrUserNotFound
+		}
+		return dto.LoginUserDto{}, customerrors.ErrInternalServer
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return dto.LoginUserDto{}, fmt.Errorf("invalid email or password: %w", err)
+		return dto.LoginUserDto{}, customerrors.ErrInvalidCredentials
 	}
 
 	refreshToken, err := s.jwtManager.GenerateRefreshToken()
@@ -109,4 +125,18 @@ func (s *UserService) Logout(ctx context.Context, refreshToken string) error {
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 	return nil
+}
+
+// isDuplicateErr определяет, является ли ошибка ошибкой дубликата (уникальный email)
+func isDuplicateErr(err error) bool {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == dbcodes.PostgresUniqueViolationCode
+	}
+
+	return false
+}
+
+func isNotFoundErr(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
 }

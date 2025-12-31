@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"habr/internal/auth/core/constants"
+	"habr/internal/pkg/constants/customerrors"
 	"habr/protos/gen/go/auth"
 	"log"
 
@@ -55,14 +55,14 @@ func (c *AuthClient) Register(ctx context.Context, email, username, password str
 		if ok {
 			switch st.Code() {
 			case codes.AlreadyExists:
-				return nil, constants.ErrUserAlreadyExists
+				return nil, customerrors.ErrUserAlreadyExists
 			case codes.InvalidArgument:
-				return nil, constants.ErrInvalidCredentials
+				return nil, customerrors.ErrInvalidCredentials
 			default:
-				return nil, constants.ErrInternalServer
+				return nil, customerrors.ErrInternalServer
 			}
 		}
-		return nil, constants.ErrInternalServer
+		return nil, customerrors.ErrInternalServer
 	}
 
 	return resp, nil
@@ -81,14 +81,14 @@ func (c *AuthClient) Login(ctx context.Context, email, password string) (*auth.L
 		if ok {
 			switch st.Code() {
 			case codes.NotFound:
-				return nil, constants.ErrUserNotFound
+				return nil, customerrors.ErrUserNotFound
 			case codes.Unauthenticated:
-				return nil, constants.ErrInvalidCredentials
+				return nil, customerrors.ErrInvalidCredentials
 			default:
-				return nil, constants.ErrInternalServer
+				return nil, customerrors.ErrInternalServer
 			}
 		}
-		return nil, constants.ErrInternalServer
+		return nil, customerrors.ErrInternalServer
 	}
 
 	return resp, nil

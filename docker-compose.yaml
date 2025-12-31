@@ -8,6 +8,6 @@ services:
       POSTGRES_PASSWORD: root_pass
       # появится бд root кроме postgres но можно задать POSTGRES_DB: postgres
     volumes:
-      - ./deploy/postgres/init-db:/docker-entrypoint-initdb.d
+      - ./deploy/postgres/init-dbcodes:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"

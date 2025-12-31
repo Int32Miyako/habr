@@ -3,7 +3,7 @@ package formatter
 import (
 	"encoding/json"
 	"errors"
-	"habr/internal/auth/core/constants"
+	"habr/internal/pkg/constants/customerrors"
 	"log"
 	"net/http"
 )
@@ -49,11 +49,11 @@ func RespUnauthorized(message string, w http.ResponseWriter) error {
 
 func ErrorToStatus(err error) int {
 	switch {
-	case errors.Is(err, constants.ErrInvalidCredentials):
+	case errors.Is(err, customerrors.ErrInvalidCredentials):
 		return http.StatusUnauthorized
-	case errors.Is(err, constants.ErrUserNotFound):
+	case errors.Is(err, customerrors.ErrUserNotFound):
 		return http.StatusNotFound
-	case errors.Is(err, constants.ErrUserAlreadyExists):
+	case errors.Is(err, customerrors.ErrUserAlreadyExists):
 		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
