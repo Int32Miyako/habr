@@ -2,28 +2,16 @@ package blog
 
 import (
 	"context"
-	"fmt"
+	"habr/db/common"
 	"habr/internal/blog/config"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Database struct {
-	Pool *pgxpool.Pool
-}
-
-func Initialize(ctx context.Context, cfg *config.Config) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, cfg.Database.Password, cfg.Database.DBName)
-	pool, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		return nil, err
-	}
-	// Проверяем подключение
-	if err = pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, err
-	}
-
-	return &Database{Pool: pool}, nil
+func Initialize(ctx context.Context, cfg *config.Config) (*common.Database, error) {
+	return common.Initialize(ctx, &common.DBConfig{
+		Host:     cfg.Database.Host,
+		Port:     cfg.Database.Port,
+		Username: cfg.Database.Username,
+		Password: cfg.Database.Password,
+		DBName:   cfg.Database.DBName,
+	})
 }
