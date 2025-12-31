@@ -11,6 +11,6 @@ func main() {
 
 	database := db.MustInitialize(cfg)
 	_ = database
-	log := logger.New()
+	log := logger.SetupLogger(cfg.Env)
 	log.Info("Starting notification service")
 }

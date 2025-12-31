@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Env        string
 	Database   *Database
 	GRPC       *GRPCServer
 	AuthClient *AuthClient
@@ -38,6 +39,11 @@ func MustLoad() *Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(".env not found, using system env")
+	}
+
+	env := os.Getenv("NOTIFICATION_ENV")
+	if env == "" {
+		log.Fatal("NOTIFICATION_ENV must be set")
 	}
 
 	// Database config
@@ -104,6 +110,7 @@ func MustLoad() *Config {
 	}
 
 	return &Config{
+		Env: env,
 		Database: &Database{
 			Username: username,
 			Password: password,
