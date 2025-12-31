@@ -8,22 +8,22 @@ import (
 )
 
 type App struct {
-	GRPCServer  *grpc.App
-	cfg         *config.Config
-	log         *slog.Logger
-	userService services.EmailService
+	GRPCServer   *grpc.App
+	cfg          *config.Config
+	log          *slog.Logger
+	emailService services.EmailService
 }
 
-func New(cfg *config.Config, log *slog.Logger, userService services.EmailService) *App {
+func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService) *App {
 	return &App{
-		cfg:         cfg,
-		log:         log,
-		userService: userService,
+		cfg:          cfg,
+		log:          log,
+		emailService: emailService,
 	}
 }
 
 func (app *App) Start() error {
-	grpcApp := grpc.New(app.log, app.cfg, app.userService)
+	grpcApp := grpc.New(app.log, app.cfg, app.emailService)
 	app.GRPCServer = grpcApp
 
 	err := grpcApp.Run()

@@ -72,7 +72,7 @@ func MustLoad() *Config {
 		log.Fatalf("NOTIFICATION_DB_NAME must be set")
 	}
 
-	// Grpc notigication server config
+	// Grpc notification server config
 	grpcPort := os.Getenv("NOTIFICATION_GRPC_SERVER_PORT")
 	if grpcPort == "" {
 		log.Fatal("NOTIFICATION_GRPC_PORT must be set")
@@ -93,7 +93,7 @@ func MustLoad() *Config {
 		log.Fatal("NOTIFICATION_GRPC_IDLE_TIMEOUT must be set")
 	}
 
-	idleTimeout, err := strconv.Atoi(timeoutEnv)
+	idleTimeout, err := strconv.Atoi(idleTimeoutEnv)
 	if err != nil || idleTimeout <= 0 {
 		log.Fatal("NOTIFICATION_GRPC_IDLE_TIMEOUT must be positive integer")
 	}

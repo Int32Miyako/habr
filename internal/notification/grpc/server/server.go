@@ -10,13 +10,13 @@ import (
 
 type serverAPI struct {
 	notification.UnimplementedNotificationServer
-	userService services.EmailService
-	log         *slog.Logger
+	emailService services.EmailService
+	log          *slog.Logger
 }
 
-func Register(server *grpc.Server, service services.EmailService, log *slog.Logger) {
+func Register(server *grpc.Server, emailService services.EmailService, log *slog.Logger) {
 	notification.RegisterNotificationServer(server, &serverAPI{
-		userService: service,
-		log:         log,
+		emailService: emailService,
+		log:          log,
 	})
 }

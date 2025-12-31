@@ -7,6 +7,7 @@ import (
 	"habr/internal/notification/repositories"
 	"habr/internal/notification/services"
 	"habr/internal/pkg/logger"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,17 +17,18 @@ func main() {
 	cfg := config.MustLoad()
 
 	database := db.MustInitialize(cfg)
-	_ = database
+	defer database.Close()
+
 	log := logger.SetupLogger(cfg.Env)
 	log.Info("Starting notification service")
 
-	emailRepo := repositories.NewEmailRepository()
+	emailRepo := repositories.NewEmailRepository(database.Pool)
 	emailService := services.NewEmailService(emailRepo)
 
 	application := app.New(cfg, log, emailService)
 	go func() {
 		if err := application.Start(); err != nil {
-			log.Error("app stopped with error", err.Error())
+			log.Error("app stopped with error", slog.Any("error", err))
 			os.Exit(1)
 		}
 	}()

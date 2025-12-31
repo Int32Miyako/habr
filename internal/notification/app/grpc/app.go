@@ -12,10 +12,10 @@ import (
 )
 
 type App struct {
-	gRPCServer  *grpc.Server
-	userService services.EmailService
-	log         *slog.Logger
-	cfg         *config.Config
+	gRPCServer   *grpc.Server
+	emailService services.EmailService
+	log          *slog.Logger
+	cfg          *config.Config
 }
 
 func New(log *slog.Logger, cfg *config.Config, emailService services.EmailService) *App {
@@ -23,7 +23,7 @@ func New(log *slog.Logger, cfg *config.Config, emailService services.EmailServic
 
 	grpcserver.Register(gRPCServer, emailService, log)
 
-	return &App{userService: emailService, log: log, cfg: cfg, gRPCServer: gRPCServer}
+	return &App{emailService: emailService, log: log, cfg: cfg, gRPCServer: gRPCServer}
 }
 
 func (app *App) Run() error {
