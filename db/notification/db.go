@@ -13,7 +13,7 @@ func MustInitialize(cfg *config.Config) *common.Database {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	db, err := common.Initialize(ctx, &common.Config{
+	db, err := common.Initialize(ctx, &common.DBConfig{
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
 		Username: cfg.Database.Username,

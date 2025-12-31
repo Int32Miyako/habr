@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+option go_package = "gen/go/notification";
+
+package notification;
+
+// Сервис уведомлений - отвечает за отправку различных типов уведомлений пользователям
+service Notification {
+  // Отправка подтверждения регистрации
+  rpc SendRegistrationConfirmation (SendRegistrationConfirmationRequest) returns (SendNotificationResponse);
+
+  // Отправка уведомления о сбросе пароля
+  rpc SendPasswordReset (SendPasswordResetRequest) returns (SendNotificationResponse);
+
+  // Отправка уведомления о новом посте/блоге
+  rpc SendBlogNotification (SendBlogNotificationRequest) returns (SendNotificationResponse);
+
+  // Универсальный метод отправки email
+  rpc SendEmail (SendEmailRequest) returns (SendNotificationResponse);
+}
+
+// Запрос на отправку подтверждения регистрации
+message SendRegistrationConfirmationRequest {
+  int64 user_id = 1;                  // ID пользователя
+  string email = 2;                   // Email получателя
+  string username = 3;                // Имя пользователя для персонализации
+  string confirmation_token = 4;      // Токен подтверждения
+  string confirmation_url = 5;        // URL для подтверждения (опционально, можно формировать на стороне сервиса)
+}
+
+// Запрос на отправку уведомления о сбросе пароля
+message SendPasswordResetRequest {
+  int64 user_id = 1;
+  string email = 2;
+  string username = 3;
+  string reset_token = 4;
+  string reset_url = 5;
+  int64 expires_at = 6;               // Unix timestamp истечения токена
+}
+
+// Запрос на отправку уведомления о блоге
+message SendBlogNotificationRequest {
+  int64 author_id = 1;                // ID автора
+  repeated int64 recipient_ids = 2;   // ID получателей
+  string blog_title = 3;              // Название блога/поста
+  string blog_url = 4;                // Ссылка на блог
+  NotificationType type = 5;          // Тип уведомления
+}
+
+// Универсальный запрос отправки email
+message SendEmailRequest {
+  string to = 1;                      // Email получателя
+  string subject = 2;                 // Тема письма
+  string body = 3;                    // Тело письма (HTML или plain text)
+  EmailFormat format = 4;             // Формат письма
+  string from_name = 5;               // Имя отправителя (опционально)
+}
+
+// Универсальный ответ на отправку уведомления
+message SendNotificationResponse {
+  SendStatus status = 1;              // Статус отправки
+  string message = 2;                 // Сообщение об ошибке или детали
+  string notification_id = 3;         // ID уведомления для отслеживания (опционально)
+}
+
+// Статус отправки уведомления
+enum SendStatus {
+  SEND_STATUS_UNSPECIFIED = 0;        // Не указан (по умолчанию)
+  SENT = 1;                           // Успешно отправлено
+  FAILED = 2;                         // Ошибка при отправке
+  QUEUED = 3;                         // Добавлено в очередь
+  PENDING = 4;                        // В процессе отправки
+}
+
+// Тип уведомления о блоге
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NEW_POST = 1;                       // Новый пост
+  POST_UPDATED = 2;                   // Пост обновлен
+  COMMENT_ADDED = 3;                  // Добавлен комментарий
+  MENTION = 4;                        // Упоминание пользователя
+}
+
+// Формат email
+enum EmailFormat {
+  EMAIL_FORMAT_UNSPECIFIED = 0;
+  PLAIN_TEXT = 1;                     // Обычный текст
+  HTML = 2;                           // HTML формат
+}
