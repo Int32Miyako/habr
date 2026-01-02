@@ -2,31 +2,24 @@ package app
 
 import (
 	"habr/internal/notification/app/grpc"
-	"habr/internal/notification/config"
-	"habr/internal/notification/core/interfaces/services"
-	"log/slog"
+
+	"github.com/IBM/sarama"
 )
 
 type App struct {
-	GRPCServer   *grpc.App
-	cfg          *config.Config
-	log          *slog.Logger
-	emailService services.EmailService
+	GRPCServer *grpc.App
+	Consumer   sarama.Consumer
 }
 
-func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService) *App {
+func New(gRPCServer *grpc.App, consumer sarama.Consumer) *App {
 	return &App{
-		cfg:          cfg,
-		log:          log,
-		emailService: emailService,
+		GRPCServer: gRPCServer,
+		Consumer:   consumer,
 	}
 }
 
 func (app *App) Start() error {
-	grpcApp := grpc.New(app.log, app.cfg, app.emailService)
-	app.GRPCServer = grpcApp
-
-	err := grpcApp.Run()
+	err := app.GRPCServer.Run()
 	return err
 }
 

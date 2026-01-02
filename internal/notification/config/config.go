@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -14,6 +15,7 @@ type Config struct {
 	Database   *Database
 	GRPC       *GRPCServer
 	AuthClient *AuthClient
+	Kafka      *Kafka
 }
 
 type Database struct {
@@ -33,6 +35,12 @@ type GRPCServer struct {
 type AuthClient struct {
 	Host string
 	Port string
+}
+
+type Kafka struct {
+	Brokers []string
+	GroupID string
+	Topic   string
 }
 
 func MustLoad() *Config {
@@ -109,6 +117,23 @@ func MustLoad() *Config {
 		log.Fatal("NOTIFICATION_GRPC_AUTH_CLIENT_PORT must be set")
 	}
 
+	// Kafka config
+	kafkaBrokersStr := os.Getenv("NOTIFICATION_KAFKA_BROKERS")
+	if kafkaBrokersStr == "" {
+		log.Fatal("NOTIFICATION_KAFKA_BROKERS must be set")
+	}
+	kafkaBrokers := strings.Split(kafkaBrokersStr, ",")
+
+	kafkaGroupID := os.Getenv("NOTIFICATION_KAFKA_GROUP_ID")
+	if kafkaGroupID == "" {
+		log.Fatal("NOTIFICATION_KAFKA_GROUP_ID must be set")
+	}
+
+	kafkaTopic := os.Getenv("NOTIFICATION_KAFKA_TOPIC")
+	if kafkaTopic == "" {
+		log.Fatal("NOTIFICATION_KAFKA_TOPIC must be set")
+	}
+
 	return &Config{
 		Env: env,
 		Database: &Database{
@@ -126,6 +151,11 @@ func MustLoad() *Config {
 		AuthClient: &AuthClient{
 			Host: grpcAuthClientHost,
 			Port: grpcAuthClientPort,
+		},
+		Kafka: &Kafka{
+			Brokers: kafkaBrokers,
+			GroupID: kafkaGroupID,
+			Topic:   kafkaTopic,
 		},
 	}
 }

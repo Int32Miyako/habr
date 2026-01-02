@@ -3,9 +3,11 @@ package main
 import (
 	db "habr/db/notification"
 	"habr/internal/notification/app"
+	"habr/internal/notification/app/grpc"
+	"habr/internal/notification/app/kafka/consumer"
+	"habr/internal/notification/app/repositories"
+	"habr/internal/notification/app/services"
 	"habr/internal/notification/config"
-	"habr/internal/notification/repositories"
-	"habr/internal/notification/services"
 	"habr/internal/pkg/logger"
 	"log/slog"
 	"os"
@@ -25,7 +27,15 @@ func main() {
 	emailRepo := repositories.NewEmailRepository(database.Pool)
 	emailService := services.NewEmailService(emailRepo)
 
-	application := app.New(cfg, log, emailService)
+	grpcApp := grpc.New(log, cfg, emailService)
+
+	cons, err := consumer.New(cfg.Kafka.Brokers, cfg.Kafka.GroupID, cfg.Kafka.Topic, log, emailService)
+	if err != nil {
+		log.Error("failed to create kafka consumer", slog.Any("error", err))
+		os.Exit(1)
+	}
+
+	application := app.New(grpcApp, cons)
 	go func() {
 		if err := application.Start(); err != nil {
 			log.Error("app stopped with error", slog.Any("error", err))
