@@ -5,7 +5,6 @@ import (
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"net/http"
-	"time"
 )
 
 type Server struct {
@@ -18,9 +17,9 @@ func New(cfg *config.Config, userService *services.UserService) *Server {
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      r,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout * 2,
+		IdleTimeout:  cfg.HTTPServer.Timeout * 15,
 	}
 
 	return &Server{

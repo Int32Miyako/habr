@@ -16,7 +16,7 @@ import (
 
 func main() {
 	cfg := config.MustLoad()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	database, err := auth.Initialize(ctx, cfg)
 	if err != nil {
@@ -41,6 +41,7 @@ func main() {
 
 	<-stop
 
-	application.Stop()
+	application.Stop(ctx)
+	cancel()
 	log.Info("Gracefully stopped")
 }

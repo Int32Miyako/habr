@@ -24,9 +24,9 @@ type Claims struct {
 
 func NewJWTManager(cfg *config.Config) *Manager {
 	return &Manager{
-		secretKey:            cfg.SecretKey,
-		accessTokenDuration:  cfg.AccessTokenDuration,
-		refreshTokenDuration: cfg.RefreshTokenDuration,
+		secretKey:            cfg.JWT.SecretKey,
+		accessTokenDuration:  cfg.JWT.AccessTokenDuration,
+		refreshTokenDuration: cfg.JWT.RefreshTokenDuration,
 	}
 }
 

@@ -14,6 +14,7 @@ import (
 func main() {
 	cfg := config.MustLoad()
 	ctx := context.Background()
+
 	database, err := db.Initialize(ctx, cfg)
 	if err != nil {
 		panic(err)
@@ -24,8 +25,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}
+
 	defer func() {
-		if err := authClient.Close(); err != nil {
+		if err = authClient.Close(); err != nil {
 			log.Printf("failed to close auth client: %v", err)
 		}
 	}()
@@ -35,9 +37,9 @@ func main() {
 
 	router := httpserver.NewRouter(blogService, authClient)
 
-	log.Printf("listening on :%s", cfg.HTTPServer.Address)
+	log.Printf("listening on :%s", cfg.HTTPServer.Port)
 
-	err = http.ListenAndServe(":"+cfg.HTTPServer.Address, router)
+	err = http.ListenAndServe(":"+cfg.HTTPServer.Port, router)
 	if err != nil {
 		panic(err)
 	}

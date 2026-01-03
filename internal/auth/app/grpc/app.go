@@ -35,12 +35,12 @@ func (app *App) MustRun() {
 func (app *App) Run() error {
 	const op = "grpcapp.Run"
 
-	l, err := net.Listen("tcp", ":"+app.cfg.HTTPServer.Port)
+	l, err := net.Listen("tcp", ":"+app.cfg.GRPCServer.Port)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	app.log.Info("grpc server started", slog.String("addr", l.Addr().String()))
+	app.log.Info("gRPC auth server started", slog.String("addr", l.Addr().String()))
 
 	if err = app.gRPCServer.Serve(l); err != nil {
 		return fmt.Errorf("%s: %w", op, err)

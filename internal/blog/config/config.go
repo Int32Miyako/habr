@@ -25,7 +25,7 @@ type (
 	}
 
 	HTTPServer struct {
-		Address     string
+		Port        string
 		Timeout     time.Duration
 		IdleTimeout time.Duration
 	}
@@ -60,7 +60,7 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("BLOG_HTTP_PORT"),
+			Port:        os.Getenv("BLOG_HTTP_PORT"),
 			Timeout:     time.Duration(timeout),
 			IdleTimeout: time.Duration(idleTimeout),
 		},

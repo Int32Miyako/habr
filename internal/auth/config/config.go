@@ -11,10 +11,10 @@ import (
 
 type (
 	Config struct {
-		*Database
-		*HTTPServer
-		*GRPCServer
-		*JWT
+		Database   *Database
+		HTTPServer *HTTPServer
+		GRPCServer *GRPCServer
+		JWT        *JWT
 	}
 
 	Database struct {
@@ -79,12 +79,12 @@ func MustLoad() *Config {
 
 		HTTPServer: &HTTPServer{
 			Port:    os.Getenv("AUTH_HTTP_PORT"),
-			Timeout: time.Duration(httpTimeout),
+			Timeout: time.Duration(httpTimeout) * time.Second,
 		},
 
 		GRPCServer: &GRPCServer{
 			Port:    os.Getenv("AUTH_GRPC_PORT"),
-			Timeout: time.Duration(grpcTimeout),
+			Timeout: time.Duration(grpcTimeout) * time.Second,
 		},
 
 		JWT: &JWT{

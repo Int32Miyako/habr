@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	grpcapp "habr/internal/auth/app/grpc"
 	httpapp "habr/internal/auth/app/http"
 	"habr/internal/auth/app/services"
@@ -24,11 +25,16 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 }
 
 func (app *App) Start() {
+	go app.HTTP.MustRun()
 
 	app.GRPC.MustRun()
 }
 
-func (app *App) Stop() {
+func (app *App) Stop(ctx context.Context) {
+	if app.HTTP != nil {
+		app.HTTP.Stop(ctx)
+	}
+
 	if app.GRPC != nil {
 		app.GRPC.Stop()
 	}
