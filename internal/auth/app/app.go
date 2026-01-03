@@ -24,10 +24,20 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 	}
 }
 
-func (app *App) Start() {
-	go app.HTTP.MustRun()
+func (app *App) Start(serverErrors chan<- error) {
+	// Запускаем HTTP сервер
+	go func() {
+		if err := app.HTTP.Run(); err != nil {
+			serverErrors <- err
+		}
+	}()
 
-	app.GRPC.MustRun()
+	// Запускаем gRPC сервер
+	go func() {
+		if err := app.GRPC.Run(); err != nil {
+			serverErrors <- err
+		}
+	}()
 }
 
 func (app *App) Stop(ctx context.Context) {

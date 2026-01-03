@@ -26,12 +26,6 @@ func New(log *slog.Logger, cfg *config.Config, userService *services.UserService
 	return &App{userService: userService, log: log, cfg: cfg, gRPCServer: gRPCServer}
 }
 
-func (app *App) MustRun() {
-	if err := app.Run(); err != nil {
-		panic(err)
-	}
-}
-
 func (app *App) Run() error {
 	const op = "grpcapp.Run"
 

@@ -25,12 +25,6 @@ func New(log *slog.Logger, cfg *config.Config, userService *services.UserService
 	}
 }
 
-func (app *App) MustRun() {
-	if err := app.Run(); err != nil {
-		panic(err)
-	}
-}
-
 func (app *App) Run() error {
 	app.log.Info("HTTP auth server started", slog.String("addr", app.HTTPServer.Addr))
 
