@@ -22,6 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer database.Close() // Закрываем БД в самом конце, после остановки серверов
 
 	log := logger.New()
 	log.Info("Starting auth service")
