@@ -30,9 +30,10 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg)
 	userService := services.NewUserService(userRepo, jwtManager)
 
-	application := app.New()
+	application := app.New(cfg, log, userService)
+
 	go func() {
-		application.Start(cfg, log, userService)
+		application.Start()
 	}()
 
 	stop := make(chan os.Signal, 1)
@@ -42,5 +43,4 @@ func main() {
 
 	application.Stop()
 	log.Info("Gracefully stopped")
-
 }

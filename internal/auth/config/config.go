@@ -13,6 +13,7 @@ type (
 	Config struct {
 		*Database
 		*HTTPServer
+		*GRPCServer
 		*JWT
 	}
 
@@ -25,9 +26,13 @@ type (
 	}
 
 	HTTPServer struct {
-		Address     string
-		Timeout     time.Duration
-		IdleTimeout time.Duration
+		Port    string
+		Timeout time.Duration
+	}
+
+	GRPCServer struct {
+		Port    string
+		Timeout time.Duration
 	}
 )
 
@@ -43,9 +48,14 @@ func MustLoad() *Config {
 		panic("Error loading .env file")
 	}
 
-	timeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
+	grpcTimeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
 	if err != nil {
-		timeout = constants.DefaultGRPCTimeoutSeconds
+		grpcTimeout = constants.DefaultGRPCTimeoutSeconds
+	}
+
+	httpTimeout, err := strconv.Atoi(os.Getenv("AUTH_HTTP_TIMEOUT"))
+	if err != nil {
+		httpTimeout = constants.DefaultHTTPTimeoutSeconds
 	}
 
 	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
@@ -68,9 +78,13 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("AUTH_GRPC_ADDRESS"),
-			Timeout:     time.Duration(timeout),
-			IdleTimeout: time.Duration(timeout),
+			Port:    os.Getenv("AUTH_HTTP_PORT"),
+			Timeout: time.Duration(httpTimeout),
+		},
+
+		GRPCServer: &GRPCServer{
+			Port:    os.Getenv("AUTH_GRPC_PORT"),
+			Timeout: time.Duration(grpcTimeout),
 		},
 
 		JWT: &JWT{

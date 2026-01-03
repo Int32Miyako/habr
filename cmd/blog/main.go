@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// Инициализация gRPC клиента для сервиса аутентификации
-	authClient, err := client.NewAuthClient(cfg.AuthGRPC.Address)
+	authClient, err := client.NewAuthClient(cfg.AuthGRPC.Port)
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}
@@ -35,8 +35,9 @@ func main() {
 
 	router := httpserver.NewRouter(blogService, authClient)
 
-	log.Println("listening on :8080")
-	err = http.ListenAndServe(":8080", router)
+	log.Printf("listening on :%s", cfg.HTTPServer.Address)
+
+	err = http.ListenAndServe(":"+cfg.HTTPServer.Address, router)
 	if err != nil {
 		panic(err)
 	}

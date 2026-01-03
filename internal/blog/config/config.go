@@ -31,7 +31,7 @@ type (
 	}
 
 	AuthGRPC struct {
-		Address string
+		Port string
 	}
 )
 
@@ -60,13 +60,13 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("BLOG_HTTP_ADDRESS"),
+			Address:     os.Getenv("BLOG_HTTP_PORT"),
 			Timeout:     time.Duration(timeout),
 			IdleTimeout: time.Duration(idleTimeout),
 		},
 
 		AuthGRPC: &AuthGRPC{
-			Address: os.Getenv("AUTH_GRPC_ADDRESS"),
+			Port: os.Getenv("AUTH_GRPC_PORT"),
 		},
 	}
 }
