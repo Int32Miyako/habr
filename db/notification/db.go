@@ -4,15 +4,11 @@ import (
 	"context"
 	"habr/db/common"
 	"habr/internal/notification/config"
-	"time"
 )
 
-// MustInitialize инициализирует подключение к базе данных и паникует в случае ошибки
+// Initialize инициализирует подключение к базе данных и паникует в случае ошибки
 // держит таймаут до 30 секунд для инициализации
-func MustInitialize(cfg *config.Config) *common.Database {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
+func Initialize(ctx context.Context, cfg *config.Config) *common.Database {
 	db, err := common.Initialize(ctx, &common.DBConfig{
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
@@ -20,9 +16,9 @@ func MustInitialize(cfg *config.Config) *common.Database {
 		Password: cfg.Database.Password,
 		DBName:   cfg.Database.DBName,
 	})
-
 	if err != nil {
 		panic(err)
 	}
+
 	return db
 }

@@ -1,30 +1,54 @@
 package app
 
 import (
+	"context"
+	"fmt"
 	"habr/internal/notification/app/grpc"
-
-	"github.com/IBM/sarama"
+	"habr/internal/notification/app/kafka"
 )
 
+// App представляет собой основное приложение, содержащее gRPC сервер и Kafka consumer.
 type App struct {
-	GRPCServer *grpc.App
-	Consumer   sarama.Consumer
+	GRPCApp  *grpc.App
+	KafkaApp *kafka.App
 }
 
-func New(gRPCServer *grpc.App, consumer sarama.Consumer) *App {
+// New создает новый экземпляр App с предоставленными gRPC сервером и Kafka consumer.
+func New(gRPCApp *grpc.App, kafkaApp *kafka.App) *App {
 	return &App{
-		GRPCServer: gRPCServer,
-		Consumer:   consumer,
+		GRPCApp:  gRPCApp,
+		KafkaApp: kafkaApp,
 	}
 }
 
-func (app *App) Start() error {
-	err := app.GRPCServer.Run()
-	return err
+// Start запускает Kafka consumer и gRPC сервер.
+func (app *App) Start(ctx context.Context) error {
+	// Запускаем Kafka consumer
+	err := app.KafkaApp.RegistrationConsumer.Start(ctx)
+	if err != nil {
+		return fmt.Errorf("kafka consumer start: %w", err)
+	}
+
+	// Запускаем gRPC сервер
+	err = app.GRPCApp.Run()
+	if err != nil {
+		return fmt.Errorf("kafka consumer start: %w", err)
+	}
+
+	return nil
 }
 
-func (app *App) Stop() {
-	if app.GRPCServer != nil {
-		app.GRPCServer.Stop()
+// Stop останавливает Kafka consumer и gRPC сервер.
+func (app *App) Stop() error {
+	if app.KafkaApp.RegistrationConsumer != nil {
+		if err := app.KafkaApp.Stop(); err != nil {
+			return fmt.Errorf("app stop: %w", err)
+		}
 	}
+
+	if app.GRPCApp != nil {
+		app.GRPCApp.Stop()
+	}
+
+	return nil
 }
