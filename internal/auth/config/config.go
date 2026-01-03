@@ -2,8 +2,10 @@ package config
 
 import (
 	"habr/internal/auth/core/constants"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -11,9 +13,10 @@ import (
 
 type (
 	Config struct {
-		*Database
-		*HTTPServer
-		*JWT
+		Database   *Database
+		HTTPServer *HTTPServer
+		JWT        *JWT
+		Kafka      *Kafka
 	}
 
 	Database struct {
@@ -28,6 +31,11 @@ type (
 		Address     string
 		Timeout     time.Duration
 		IdleTimeout time.Duration
+	}
+
+	Kafka struct {
+		Brokers []string
+		Topic   string
 	}
 )
 
@@ -48,14 +56,26 @@ func MustLoad() *Config {
 		timeout = constants.DefaultGRPCTimeoutSeconds
 	}
 
-	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
+	accessTokenDuration, err := strconv.Atoi(os.Getenv("AUTH_JWT_ACCESS_TOKEN_DURATION_MINUTES"))
 	if err != nil {
 		accessTokenDuration = constants.DefaultAccessTokenDurationMinutes
 	}
 
-	refreshTokenDuration, err := strconv.Atoi(os.Getenv("JWT_REFRESH_TOKEN_DURATION_DAYS"))
+	refreshTokenDuration, err := strconv.Atoi(os.Getenv("AUTH_JWT_REFRESH_TOKEN_DURATION_DAYS"))
 	if err != nil {
 		refreshTokenDuration = constants.DefaultRefreshTokenDurationDays
+	}
+
+	// Kafka config
+	kafkaBrokersStr := os.Getenv("AUTH_KAFKA_BROKERS")
+	if kafkaBrokersStr == "" {
+		log.Fatal("AUTH_KAFKA_BROKERS must be set")
+	}
+	kafkaBrokers := strings.Split(kafkaBrokersStr, ",")
+
+	kafkaTopic := os.Getenv("AUTH_KAFKA_TOPIC")
+	if kafkaTopic == "" {
+		log.Fatal("AUTH_KAFKA_TOPIC must be set")
 	}
 
 	return &Config{
@@ -74,9 +94,13 @@ func MustLoad() *Config {
 		},
 
 		JWT: &JWT{
-			SecretKey:            os.Getenv("JWT_SECRET_KEY"),
+			SecretKey:            os.Getenv("AUTH_JWT_SECRET_KEY"),
 			AccessTokenDuration:  time.Duration(accessTokenDuration) * time.Minute,
 			RefreshTokenDuration: time.Duration(refreshTokenDuration) * 24 * time.Hour,
+		},
+		Kafka: &Kafka{
+			Brokers: kafkaBrokers,
+			Topic:   kafkaTopic,
 		},
 	}
 

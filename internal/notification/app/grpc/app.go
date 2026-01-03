@@ -2,9 +2,9 @@ package grpc
 
 import (
 	"fmt"
+	grpcserver "habr/internal/notification/app/grpc/server"
 	"habr/internal/notification/config"
 	"habr/internal/notification/core/interfaces/services"
-	grpcserver "habr/internal/notification/grpc/server"
 	"log/slog"
 	"net"
 
