@@ -21,7 +21,7 @@ func main() {
 	}
 
 	// Инициализация gRPC клиента для сервиса аутентификации
-	authClient, err := client.NewAuthClient(cfg.AuthGRPC.Port)
+	authClient, err := client.NewAuthClient(":" + cfg.AuthGRPC.Port)
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}

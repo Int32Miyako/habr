@@ -61,8 +61,8 @@ func MustLoad() *Config {
 
 		HTTPServer: &HTTPServer{
 			Port:        os.Getenv("BLOG_HTTP_PORT"),
-			Timeout:     time.Duration(timeout),
-			IdleTimeout: time.Duration(idleTimeout),
+			Timeout:     time.Duration(timeout) * time.Second,
+			IdleTimeout: time.Duration(idleTimeout) * time.Second,
 		},
 
 		AuthGRPC: &AuthGRPC{

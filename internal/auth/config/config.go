@@ -61,7 +61,7 @@ func MustLoad() *Config {
 
 	gracefulShutdownTimeout, err := strconv.Atoi(os.Getenv("AUTH_GRACEFUL_SHUTDOWN_TIMEOUT"))
 	if err != nil {
-		httpTimeout = constants.DefaultGracefulShutdownTimeoutSeconds
+		gracefulShutdownTimeout = constants.DefaultGracefulShutdownTimeoutSeconds
 	}
 
 	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
