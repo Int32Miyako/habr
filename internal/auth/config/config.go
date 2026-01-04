@@ -26,8 +26,9 @@ type (
 	}
 
 	HTTPServer struct {
-		Port    string
-		Timeout time.Duration
+		Port                    string
+		Timeout                 time.Duration
+		GracefulShutdownTimeout time.Duration
 	}
 
 	GRPCServer struct {
@@ -58,6 +59,11 @@ func MustLoad() *Config {
 		httpTimeout = constants.DefaultHTTPTimeoutSeconds
 	}
 
+	gracefulShutdownTimeout, err := strconv.Atoi(os.Getenv("AUTH_GRACEFUL_SHUTDOWN_TIMEOUT"))
+	if err != nil {
+		httpTimeout = constants.DefaultGracefulShutdownTimeoutSeconds
+	}
+
 	accessTokenDuration, err := strconv.Atoi(os.Getenv("JWT_ACCESS_TOKEN_DURATION_MINUTES"))
 	if err != nil {
 		accessTokenDuration = constants.DefaultAccessTokenDurationMinutes
@@ -78,8 +84,9 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Port:    os.Getenv("AUTH_HTTP_PORT"),
-			Timeout: time.Duration(httpTimeout) * time.Second,
+			Port:                    os.Getenv("AUTH_HTTP_PORT"),
+			Timeout:                 time.Duration(httpTimeout) * time.Second,
+			GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
 		},
 
 		GRPCServer: &GRPCServer{
@@ -93,5 +100,4 @@ func MustLoad() *Config {
 			RefreshTokenDuration: time.Duration(refreshTokenDuration) * 24 * time.Hour,
 		},
 	}
-
 }

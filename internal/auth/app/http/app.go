@@ -26,7 +26,10 @@ func New(log *slog.Logger, cfg *config.Config, userService *services.UserService
 }
 
 func (app *App) Run() error {
-	app.log.Info("HTTP auth server started", slog.String("addr", app.HTTPServer.Addr))
+	const op = "httpapp.Run"
+
+	app.log.With(slog.String("op", op)).
+		Info("HTTP auth server started", slog.String("addr", app.HTTPServer.Addr))
 
 	if err := app.HTTPServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("http server start: %w", err)
