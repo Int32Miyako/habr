@@ -4,20 +4,8 @@ runBlog:
 runAuth:
 	go run cmd/auth/main.go
 
-#migrateUp:
-#	go run ./cmd/migrator/main.go \
-#   		--storage-path="postgres://root:root_pass@localhost:5432/root_db?sslmode=disable" \
-#    	--migrations-path="./dbcodes/migrations" \
-#   		--migrations-table="migrations" \
-#   		--direction="up"
-#
-#migrateDown:
-#	go run ./cmd/migrator/main.go \
-#   		--storage-path="postgres://root:root_pass@localhost:5432/root_db?sslmode=disable" \
-#    	--migrations-path="./dbcodes/migrations" \
-#   		--migrations-table="migrations" \
-#   		--direction="down"
-
+runNotification:
+	go run cmd/notification/main.go
 
 authGenerateProto:
 	protoc \

@@ -2,8 +2,8 @@ package auth
 
 import (
 	"encoding/json"
+	"habr/internal/auth/app/http/dto"
 	"habr/internal/auth/app/services"
-	"habr/internal/blog/http/dto"
 	"habr/internal/pkg/formatter"
 	"log"
 	"net/http"
