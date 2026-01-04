@@ -2,53 +2,42 @@ package auth
 
 import (
 	"encoding/json"
-	"habr/internal/blog/grpc/client"
-	"habr/internal/blog/http/dto"
+	"habr/internal/auth/app/http/dto"
+	"habr/internal/auth/app/services"
 	"habr/internal/pkg/formatter"
 	"log"
 	"net/http"
 )
 
-func RegisterUser(client *client.AuthClient) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		req := dto.RequestRegisterUser{}
-
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			_ = formatter.RespBadRequest("Bad Request", w)
-			return
-		}
-		resp, err := client.Register(ctx, req.Email, req.Name, req.Password)
-		if err != nil {
-			status := formatter.ErrorToStatus(err)
-			_ = formatter.RespError(status, err.Error(), w)
-			return
-		}
-
-		err = formatter.RespJSON(http.StatusCreated, dto.ResponseRegisterUser{UserId: resp.UserId}, w)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-}
-
-func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
+func LoginUser(userService *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		req := dto.RequestLoginUser{}
 
+		if req.Email == "" {
+			_ = formatter.RespBadRequest("Bad Request", w)
+			return
+		}
+
+		if req.Password == "" {
+			_ = formatter.RespBadRequest("Bad Request", w)
+			return
+		}
+
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
 
-		resp, err := authClient.Login(ctx, req.Email, req.Password)
-
+		resp, err := userService.LoginUser(ctx, dto.RequestLoginUser{
+			Email:    req.Email,
+			Password: req.Password,
+		})
 		if err != nil {
 			status := formatter.ErrorToStatus(err)
 			_ = formatter.RespError(status, err.Error(), w)
+
 			return
 		}
 
@@ -68,6 +57,5 @@ func LoginUser(authClient *client.AuthClient) http.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 		}
-
 	}
 }

@@ -26,20 +26,15 @@ func New(log *slog.Logger, cfg *config.Config, userService *services.UserService
 	return &App{userService: userService, log: log, cfg: cfg, gRPCServer: gRPCServer}
 }
 
-func (app *App) MustRun() {
-	if err := app.Run(); err != nil {
-		panic(err)
-	}
-}
-
 func (app *App) Run() error {
 	const op = "grpcapp.Run"
-	l, err := net.Listen("tcp", app.cfg.Address)
+
+	l, err := net.Listen("tcp", ":"+app.cfg.GRPCServer.Port)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	app.log.Info("grpc server started", slog.String("addr", l.Addr().String()))
+	app.log.Info("gRPC auth server started", slog.String("addr", l.Addr().String()))
 
 	if err = app.gRPCServer.Serve(l); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -52,7 +47,7 @@ func (app *App) Stop() {
 	const op = "grpcapp.Stop"
 
 	app.log.With(slog.String("op", op)).
-		Info("stopping gRPC server", slog.String("address", app.cfg.Address))
+		Info("stopping gRPC server", slog.String("address", app.cfg.GRPCServer.Port))
 
 	app.gRPCServer.GracefulStop()
 }

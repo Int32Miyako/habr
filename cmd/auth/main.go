@@ -22,6 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer database.Close()
 
 	log := logger.New()
 	log.Info("Starting auth service")
@@ -30,17 +31,27 @@ func main() {
 	jwtManager := jwt.NewJWTManager(cfg)
 	userService := services.NewUserService(userRepo, jwtManager)
 
-	application := app.New()
-	go func() {
-		application.Start(cfg, log, userService)
-	}()
+	application := app.New(cfg, log, userService)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
-	<-stop
+	serverErrors := make(chan error, 2)
 
-	application.Stop()
+	log.Info("Starting HTTP and gRPC servers...")
+	application.Start(serverErrors)
+	log.Info("Servers started in background goroutines")
+
+	select {
+	case sig := <-stop:
+		log.Info("Received shutdown signal", "signal", sig.String())
+	case err = <-serverErrors:
+		log.Error("Server error, shutting down", "error", err)
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTPServer.GracefulShutdownTimeout)
+	defer cancel()
+
+	application.Stop(shutdownCtx)
 	log.Info("Gracefully stopped")
-
 }

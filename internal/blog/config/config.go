@@ -25,13 +25,13 @@ type (
 	}
 
 	HTTPServer struct {
-		Address     string
+		Port        string
 		Timeout     time.Duration
 		IdleTimeout time.Duration
 	}
 
 	AuthGRPC struct {
-		Address string
+		Port string
 	}
 )
 
@@ -60,13 +60,13 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("BLOG_HTTP_ADDRESS"),
-			Timeout:     time.Duration(timeout),
-			IdleTimeout: time.Duration(idleTimeout),
+			Port:        os.Getenv("BLOG_HTTP_PORT"),
+			Timeout:     time.Duration(timeout) * time.Second,
+			IdleTimeout: time.Duration(idleTimeout) * time.Second,
 		},
 
 		AuthGRPC: &AuthGRPC{
-			Address: os.Getenv("AUTH_GRPC_ADDRESS"),
+			Port: os.Getenv("AUTH_GRPC_PORT"),
 		},
 	}
 }
