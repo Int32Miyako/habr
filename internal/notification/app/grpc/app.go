@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	grpcserver "habr/internal/notification/app/grpc/server"
 	"habr/internal/notification/config"
@@ -26,7 +27,7 @@ func New(log *slog.Logger, cfg *config.Config, emailService services.EmailServic
 	return &App{emailService: emailService, log: log, cfg: cfg, gRPCServer: gRPCServer}
 }
 
-func (app *App) Run() error {
+func (app *App) Run(ctx context.Context) error {
 	const op = "grpcapp.Run"
 
 	l, err := net.Listen("tcp", ":"+app.cfg.GRPC.Port)
@@ -36,18 +37,42 @@ func (app *App) Run() error {
 
 	app.log.Info("grpc server started", slog.String("addr", l.Addr().String()))
 
-	if err = app.gRPCServer.Serve(l); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.gRPCServer.Serve(l); err != nil {
+			serverErr <- fmt.Errorf("%s: %w", op, err)
+		}
+	}()
 
-	return nil
+	select {
+	case err = <-serverErr:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
-func (app *App) Stop() {
-	const op = "grpcapp.Stop"
+func (app *App) Stop(ctx context.Context) {
+	const op = "notification grpcapp.Stop"
 
-	app.log.With(slog.String("op", op)).
-		Info("stopping gRPC server", slog.String("address", app.cfg.GRPC.Port))
+	app.log.
+		Info("stopping notification gRPC server",
+			slog.String("op", op),
+			slog.String("address", app.cfg.GRPC.Port))
 
-	app.gRPCServer.GracefulStop()
+	done := make(chan struct{})
+
+	go func() {
+		app.gRPCServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		app.log.Info("gRPC server stopped gracefully")
+
+	case <-ctx.Done():
+		app.log.Warn("gRPC graceful shutdown timeout exceeded, forcing stop")
+		app.gRPCServer.Stop()
+	}
 }

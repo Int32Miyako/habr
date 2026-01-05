@@ -11,7 +11,9 @@ import (
 )
 
 type Config struct {
-	Env        string
+	GracefulShutdownTimeout time.Duration
+	Env                     string
+
 	Database   *Database
 	GRPC       *GRPCServer
 	AuthClient *AuthClient
@@ -134,8 +136,14 @@ func MustLoad() *Config {
 		log.Fatal("NOTIFICATION_KAFKA_TOPIC must be set")
 	}
 
+	gracefulShutdownTimeout, err := strconv.Atoi(os.Getenv("NOTIFICATION_GRACEFUL_SHUTDOWN_TIMEOUT"))
+	if err != nil {
+		log.Fatal("NOTIFICATION_GRACEFUL_SHUTDOWN_TIMEOUT must be set")
+	}
+
 	return &Config{
-		Env: env,
+		GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
+		Env:                     env,
 		Database: &Database{
 			Username: username,
 			Password: password,

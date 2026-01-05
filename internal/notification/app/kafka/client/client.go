@@ -57,9 +57,17 @@ func (k *KafkaConsumer) Subscribe(ctx context.Context, topic string, handler fun
 
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				k.log.Info("Consumer context cancelled, stopping consumption")
+				return
+			default:
+			}
+
 			err := k.consumerGroup.Consume(ctx, strings.Split(topic, ","), consumerHandler)
 			if err != nil {
 				k.log.Error("Error consuming messages", slog.String("error", err.Error()))
+				return
 			}
 		}
 	}()

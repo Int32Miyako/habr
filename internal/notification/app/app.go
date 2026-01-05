@@ -21,33 +21,32 @@ func New(gRPCApp *grpc.App, kafkaApp *kafka.App) *App {
 	}
 }
 
-// Start запускает Kafka consumer и gRPC сервер.
+// Start запускает Kafka consumer и gRPC сервер в отдельных горутинах.
 func (app *App) Start(ctx context.Context) error {
-	// Запускаем Kafka consumer
-	err := app.KafkaApp.RegistrationConsumer.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("kafka consumer start: %w", err)
-	}
+	errChan := make(chan error, 2)
 
-	// Запускаем gRPC сервер
-	err = app.GRPCApp.Run()
-	if err != nil {
-		return fmt.Errorf("kafka consumer start: %w", err)
-	}
+	go func() {
+		errChan <- app.KafkaApp.Run(ctx)
+	}()
 
-	return nil
+	go func() {
+		errChan <- app.GRPCApp.Run(ctx)
+	}()
+
+	return <-errChan
 }
 
 // Stop останавливает Kafka consumer и gRPC сервер.
-func (app *App) Stop() error {
+func (app *App) Stop(ctx context.Context) error {
 	if app.KafkaApp.RegistrationConsumer != nil {
-		if err := app.KafkaApp.Stop(); err != nil {
+		err := app.KafkaApp.Stop(ctx)
+		if err != nil {
 			return fmt.Errorf("app stop: %w", err)
 		}
 	}
 
 	if app.GRPCApp != nil {
-		app.GRPCApp.Stop()
+		app.GRPCApp.Stop(ctx)
 	}
 
 	return nil
