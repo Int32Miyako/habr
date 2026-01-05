@@ -38,9 +38,7 @@ func main() {
 
 	serverErrors := make(chan error, 2)
 
-	log.Info("Starting HTTP and gRPC servers...")
 	application.Start(serverErrors)
-	log.Info("Servers started in background goroutines")
 
 	select {
 	case sig := <-stop:
@@ -49,7 +47,7 @@ func main() {
 		log.Error("Server error, shutting down", "error", err)
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTPServer.GracefulShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
 	defer cancel()
 
 	application.Stop(shutdownCtx)

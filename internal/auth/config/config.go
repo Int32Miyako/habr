@@ -13,6 +13,8 @@ import (
 
 type (
 	Config struct {
+		GracefulShutdownTimeout time.Duration
+
 		Database   *Database
 		HTTPServer *HTTPServer
 		GRPCServer *GRPCServer
@@ -29,9 +31,8 @@ type (
 	}
 
 	HTTPServer struct {
-		Port                    string
-		Timeout                 time.Duration
-		GracefulShutdownTimeout time.Duration
+		Port    string
+		Timeout time.Duration
 	}
 
 	GRPCServer struct {
@@ -95,6 +96,8 @@ func MustLoad() *Config {
 	}
 
 	return &Config{
+		GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
+
 		Database: &Database{
 			Host:     os.Getenv("AUTH_DB_HOST"),
 			Port:     os.Getenv("AUTH_DB_PORT"),
@@ -104,9 +107,8 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Port:                    os.Getenv("AUTH_HTTP_PORT"),
-			Timeout:                 time.Duration(httpTimeout) * time.Second,
-			GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
+			Port:    os.Getenv("AUTH_HTTP_PORT"),
+			Timeout: time.Duration(httpTimeout) * time.Second,
 		},
 
 		GRPCServer: &GRPCServer{
@@ -119,6 +121,7 @@ func MustLoad() *Config {
 			AccessTokenDuration:  time.Duration(accessTokenDuration) * time.Minute,
 			RefreshTokenDuration: time.Duration(refreshTokenDuration) * 24 * time.Hour,
 		},
+
 		Kafka: &Kafka{
 			Brokers: kafkaBrokers,
 			Topic:   kafkaTopic,

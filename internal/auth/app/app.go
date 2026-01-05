@@ -37,19 +37,21 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 }
 
 func (app *App) Start(serverErrors chan<- error) {
-	// Запускаем HTTP сервер
+	app.log.Info("Starting HTTP and gRPC servers...")
+
 	go func() {
 		if err := app.HTTP.Run(); err != nil {
 			serverErrors <- err
 		}
 	}()
 
-	// Запускаем gRPC сервер
 	go func() {
 		if err := app.GRPC.Run(); err != nil {
 			serverErrors <- err
 		}
 	}()
+
+	app.log.Info("Servers started in background goroutines")
 }
 
 func (app *App) Stop(ctx context.Context) {
@@ -58,7 +60,7 @@ func (app *App) Stop(ctx context.Context) {
 	}
 
 	if app.GRPC != nil {
-		app.GRPC.Stop()
+		app.GRPC.Stop(ctx)
 	}
 
 	if app.KafkaApp != nil {
