@@ -1,7 +1,9 @@
 package constants
 
 const (
-	DefaultGRPCTimeoutSeconds         = 5
-	DefaultAccessTokenDurationMinutes = 15
-	DefaultRefreshTokenDurationDays   = 30
+	DefaultHTTPTimeoutSeconds             = 5
+	DefaultGracefulShutdownTimeoutSeconds = 10
+	DefaultGRPCTimeoutSeconds             = 5
+	DefaultAccessTokenDurationMinutes     = 15
+	DefaultRefreshTokenDurationDays       = 30
 )

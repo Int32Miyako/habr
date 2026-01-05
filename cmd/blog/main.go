@@ -14,18 +14,20 @@ import (
 func main() {
 	cfg := config.MustLoad()
 	ctx := context.Background()
+
 	database, err := db.Initialize(ctx, cfg)
 	if err != nil {
 		panic(err)
 	}
 
 	// Инициализация gRPC клиента для сервиса аутентификации
-	authClient, err := client.NewAuthClient(cfg.AuthGRPC.Address)
+	authClient, err := client.NewAuthClient(":" + cfg.AuthGRPC.Port)
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}
+
 	defer func() {
-		if err := authClient.Close(); err != nil {
+		if err = authClient.Close(); err != nil {
 			log.Printf("failed to close auth client: %v", err)
 		}
 	}()
@@ -35,8 +37,9 @@ func main() {
 
 	router := httpserver.NewRouter(blogService, authClient)
 
-	log.Println("listening on :8080")
-	err = http.ListenAndServe(":8080", router)
+	log.Printf("listening on :%s", cfg.HTTPServer.Port)
+
+	err = http.ListenAndServe(":"+cfg.HTTPServer.Port, router)
 	if err != nil {
 		panic(err)
 	}

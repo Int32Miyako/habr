@@ -1,7 +1,9 @@
 package app
 
 import (
-	"habr/internal/auth/app/grpc"
+	"context"
+	grpcapp "habr/internal/auth/app/grpc"
+	httpapp "habr/internal/auth/app/http"
 	"habr/internal/auth/app/kafka"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
@@ -10,13 +12,15 @@ import (
 )
 
 type App struct {
-	GRPCApp  *grpc.App
+	GRPC     *grpcapp.App
+	HTTP     *httpapp.App
 	KafkaApp *kafka.App
 	log      *slog.Logger
 }
 
 func New(cfg *config.Config, log *slog.Logger, userService *services.UserService) *App {
-	grpcApp := grpc.New(log, cfg, userService)
+	grpcApp := grpcapp.New(log, cfg, userService)
+	httpApp := httpapp.New(log, cfg, userService)
 
 	kafkaApp, err := kafka.New(cfg, log)
 	if err != nil {
@@ -25,19 +29,36 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 	}
 
 	return &App{
-		GRPCApp:  grpcApp,
+		GRPC:     grpcApp,
+		HTTP:     httpApp,
 		KafkaApp: kafkaApp,
 		log:      log,
 	}
 }
 
-func (app *App) Start() {
-	app.GRPCApp.MustRun()
+func (app *App) Start(serverErrors chan<- error) {
+	// Запускаем HTTP сервер
+	go func() {
+		if err := app.HTTP.Run(); err != nil {
+			serverErrors <- err
+		}
+	}()
+
+	// Запускаем gRPC сервер
+	go func() {
+		if err := app.GRPC.Run(); err != nil {
+			serverErrors <- err
+		}
+	}()
 }
 
-func (app *App) Stop() {
-	if app.GRPCApp != nil {
-		app.GRPCApp.Stop()
+func (app *App) Stop(ctx context.Context) {
+	if app.HTTP != nil {
+		app.HTTP.Stop(ctx)
+	}
+
+	if app.GRPC != nil {
+		app.GRPC.Stop()
 	}
 
 	if app.KafkaApp != nil {

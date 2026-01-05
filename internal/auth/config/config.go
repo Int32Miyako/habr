@@ -15,6 +15,7 @@ type (
 	Config struct {
 		Database   *Database
 		HTTPServer *HTTPServer
+		GRPCServer *GRPCServer
 		JWT        *JWT
 		Kafka      *Kafka
 	}
@@ -28,9 +29,14 @@ type (
 	}
 
 	HTTPServer struct {
-		Address     string
-		Timeout     time.Duration
-		IdleTimeout time.Duration
+		Port                    string
+		Timeout                 time.Duration
+		GracefulShutdownTimeout time.Duration
+	}
+
+	GRPCServer struct {
+		Port    string
+		Timeout time.Duration
 	}
 
 	Kafka struct {
@@ -51,9 +57,19 @@ func MustLoad() *Config {
 		panic("Error loading .env file")
 	}
 
-	timeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
+	grpcTimeout, err := strconv.Atoi(os.Getenv("AUTH_GRPC_TIMEOUT"))
 	if err != nil {
-		timeout = constants.DefaultGRPCTimeoutSeconds
+		grpcTimeout = constants.DefaultGRPCTimeoutSeconds
+	}
+
+	httpTimeout, err := strconv.Atoi(os.Getenv("AUTH_HTTP_TIMEOUT"))
+	if err != nil {
+		httpTimeout = constants.DefaultHTTPTimeoutSeconds
+	}
+
+	gracefulShutdownTimeout, err := strconv.Atoi(os.Getenv("AUTH_GRACEFUL_SHUTDOWN_TIMEOUT"))
+	if err != nil {
+		gracefulShutdownTimeout = constants.DefaultGracefulShutdownTimeoutSeconds
 	}
 
 	accessTokenDuration, err := strconv.Atoi(os.Getenv("AUTH_JWT_ACCESS_TOKEN_DURATION_MINUTES"))
@@ -88,9 +104,14 @@ func MustLoad() *Config {
 		},
 
 		HTTPServer: &HTTPServer{
-			Address:     os.Getenv("AUTH_GRPC_ADDRESS"),
-			Timeout:     time.Duration(timeout),
-			IdleTimeout: time.Duration(timeout),
+			Port:                    os.Getenv("AUTH_HTTP_PORT"),
+			Timeout:                 time.Duration(httpTimeout) * time.Second,
+			GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
+		},
+
+		GRPCServer: &GRPCServer{
+			Port:    os.Getenv("AUTH_GRPC_PORT"),
+			Timeout: time.Duration(grpcTimeout) * time.Second,
 		},
 
 		JWT: &JWT{
@@ -103,5 +124,4 @@ func MustLoad() *Config {
 			Topic:   kafkaTopic,
 		},
 	}
-
 }
