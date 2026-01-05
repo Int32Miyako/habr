@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"habr/internal/notification/app/kafka/client"
+	"habr/internal/notification/app/kafka/consumer/client"
 	"habr/internal/notification/config"
 	consumerContract "habr/internal/notification/core/interfaces/kafka/client"
 	"habr/internal/notification/core/interfaces/services"
+	"habr/internal/notification/core/models"
 	"log/slog"
 )
 
@@ -44,7 +45,7 @@ func (c *RegistrationNotifier) Subscribe(ctx context.Context, topic string) erro
 	return nil
 }
 
-func (c *RegistrationNotifier) handleMessage(msg *consumerContract.Message) error {
+func (c *RegistrationNotifier) handleMessage(msg *models.Message) error {
 	c.log.Info("received message from kafka",
 		slog.String("key", msg.Key),
 		slog.String("value", string(msg.Value)),

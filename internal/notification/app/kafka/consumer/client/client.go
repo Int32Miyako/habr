@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"habr/internal/notification/config"
-	"habr/internal/notification/core/interfaces/kafka/client"
+	"habr/internal/notification/core/models"
 	"log/slog"
 	"strings"
 
@@ -12,7 +12,7 @@ import (
 )
 
 type ConsumerHandler struct {
-	handler func(*client.Message) error
+	handler func(*models.Message) error
 	log     *slog.Logger
 }
 
@@ -30,7 +30,7 @@ func (ch *ConsumerHandler) Cleanup(session sarama.ConsumerGroupSession) error {
 // Process each message from the claim and mark the message as processed.
 func (ch *ConsumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
-		msg := &client.Message{
+		msg := &models.Message{
 			Key:   string(message.Key),
 			Value: message.Value,
 		}
@@ -49,7 +49,7 @@ type KafkaConsumer struct {
 	kafkaConfig   *config.Kafka
 }
 
-func (k *KafkaConsumer) Subscribe(ctx context.Context, topic string, handler func(*client.Message) error) error {
+func (k *KafkaConsumer) Subscribe(ctx context.Context, topic string, handler func(*models.Message) error) error {
 	consumerHandler := &ConsumerHandler{
 		handler: handler,
 		log:     k.log,
