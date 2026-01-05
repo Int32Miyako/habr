@@ -38,9 +38,9 @@ type AuthClient struct {
 }
 
 type Kafka struct {
-	Brokers []string
-	GroupID string
-	Topic   string
+	Brokers       []string
+	ConsumerGroup string
+	Topic         string
 }
 
 func MustLoad() *Config {
@@ -153,9 +153,9 @@ func MustLoad() *Config {
 			Port: grpcAuthClientPort,
 		},
 		Kafka: &Kafka{
-			Brokers: kafkaBrokers,
-			GroupID: kafkaGroupID,
-			Topic:   kafkaTopic,
+			Brokers:       kafkaBrokers,
+			ConsumerGroup: kafkaGroupID,
+			Topic:         kafkaTopic,
 		},
 	}
 }

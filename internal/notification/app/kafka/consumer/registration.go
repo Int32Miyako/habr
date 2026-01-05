@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"habr/internal/notification/app/kafka/client"
 	"habr/internal/notification/config"
+	"habr/internal/notification/core/interfaces/consumer"
 	"habr/internal/notification/core/interfaces/services"
 	"log/slog"
 	"sync"
@@ -20,23 +22,21 @@ type RegistrationNotifier struct {
 	wg           sync.WaitGroup
 }
 
+func (n *RegistrationNotifier) Subscribe(ctx context.Context, topic string, handler func(*consumer.Message) error) error {
+	//TODO implement me
+	panic("implement me")
+
+}
+
 func NewRegistrationNotifier(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*RegistrationNotifier, error) {
-	brokers := cfg.Kafka.Brokers
-	topic := cfg.Kafka.Topic
-
-	saramaCfg := sarama.NewConfig()
-	saramaCfg.Version = sarama.V4_1_0_0
-	saramaCfg.Consumer.Return.Errors = true
-	saramaCfg.Consumer.Offsets.Initial = sarama.OffsetNewest
-
-	consumer, err := sarama.NewConsumer(brokers, saramaCfg)
+	c, err := client.NewConsumer(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
 
 	return &RegistrationNotifier{
-		consumer:     consumer,
-		topic:        topic,
+		consumer:     c,
+		topic:        cfg.Kafka.Topic,
 		log:          log,
 		emailService: emailService,
 	}, nil
