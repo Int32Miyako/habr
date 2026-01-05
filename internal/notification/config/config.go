@@ -124,9 +124,9 @@ func MustLoad() *Config {
 	}
 	kafkaBrokers := strings.Split(kafkaBrokersStr, ",")
 
-	kafkaGroupID := os.Getenv("NOTIFICATION_KAFKA_GROUP_ID")
-	if kafkaGroupID == "" {
-		log.Fatal("NOTIFICATION_KAFKA_GROUP_ID must be set")
+	consumerGroup := os.Getenv("NOTIFICATION_KAFKA_CONSUMER_GROUP")
+	if consumerGroup == "" {
+		log.Fatal("NOTIFICATION_KAFKA_CONSUMER_GROUP must be set")
 	}
 
 	kafkaTopic := os.Getenv("NOTIFICATION_KAFKA_TOPIC")
@@ -154,7 +154,7 @@ func MustLoad() *Config {
 		},
 		Kafka: &Kafka{
 			Brokers:       kafkaBrokers,
-			ConsumerGroup: kafkaGroupID,
+			ConsumerGroup: consumerGroup,
 			Topic:         kafkaTopic,
 		},
 	}

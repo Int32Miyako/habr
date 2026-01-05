@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"habr/internal/notification/app/kafka/client"
 	"habr/internal/notification/config"
-	"habr/internal/notification/core/interfaces/consumer"
+	consumerContract "habr/internal/notification/core/interfaces/kafka/client"
 	"habr/internal/notification/core/interfaces/services"
 	"log/slog"
 	"sync"
@@ -15,56 +15,23 @@ import (
 )
 
 type RegistrationNotifier struct {
-	consumer     sarama.Consumer
-	topic        string
+	consumer     consumerContract.MessageConsumer
 	log          *slog.Logger
 	emailService services.EmailService
 	wg           sync.WaitGroup
 }
 
-func (n *RegistrationNotifier) Subscribe(ctx context.Context, topic string, handler func(*consumer.Message) error) error {
-	//TODO implement me
-	panic("implement me")
-
-}
-
 func NewRegistrationNotifier(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*RegistrationNotifier, error) {
-	c, err := client.NewConsumer(cfg)
+	c, err := client.NewConsumerGroup(cfg.Kafka, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
 
 	return &RegistrationNotifier{
 		consumer:     c,
-		topic:        cfg.Kafka.Topic,
 		log:          log,
 		emailService: emailService,
 	}, nil
-}
-
-func (c *RegistrationNotifier) Start(ctx context.Context) error {
-	partitions, err := c.consumer.Partitions(c.topic)
-	if err != nil {
-		return fmt.Errorf("failed to get partitions: %w", err)
-	}
-
-	c.log.Info("starting kafka consumer",
-		slog.String("topic", c.topic),
-		slog.Int("partitions", len(partitions)),
-	)
-
-	for _, partition := range partitions {
-		pc, err := c.consumer.ConsumePartition(c.topic, partition, sarama.OffsetNewest)
-		if err != nil {
-			return fmt.Errorf("failed to consume partition %d: %w", partition, err)
-		}
-
-		c.wg.Add(1)
-
-		go c.consumePartition(ctx, pc, partition)
-	}
-
-	return nil
 }
 
 func (c *RegistrationNotifier) consumePartition(ctx context.Context, pc sarama.PartitionConsumer, partition int32) {
