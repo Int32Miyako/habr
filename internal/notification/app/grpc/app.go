@@ -27,7 +27,7 @@ func New(log *slog.Logger, cfg *config.Config, emailService services.EmailServic
 	return &App{emailService: emailService, log: log, cfg: cfg, gRPCServer: gRPCServer}
 }
 
-func (app *App) Run(ctx context.Context) error {
+func (app *App) Run() error {
 	const op = "grpcapp.Run"
 
 	l, err := net.Listen("tcp", ":"+app.cfg.GRPC.Port)
@@ -37,19 +37,11 @@ func (app *App) Run(ctx context.Context) error {
 
 	app.log.Info("grpc server started", slog.String("addr", l.Addr().String()))
 
-	serverErr := make(chan error, 1)
-	go func() {
-		if err := app.gRPCServer.Serve(l); err != nil {
-			serverErr <- fmt.Errorf("%s: %w", op, err)
-		}
-	}()
-
-	select {
-	case err = <-serverErr:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
+	if err = app.gRPCServer.Serve(l); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
 	}
+
+	return nil
 }
 
 func (app *App) Stop(ctx context.Context) {

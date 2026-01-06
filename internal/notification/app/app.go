@@ -30,7 +30,7 @@ func (app *App) Start(ctx context.Context) error {
 	}()
 
 	go func() {
-		errChan <- app.GRPCApp.Run(ctx)
+		errChan <- app.GRPCApp.Run()
 	}()
 
 	return <-errChan
