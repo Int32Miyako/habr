@@ -47,10 +47,9 @@ func (app *App) Run() error {
 func (app *App) Stop(ctx context.Context) {
 	const op = "notification grpcapp.Stop"
 
-	app.log.
-		Info("stopping notification gRPC server",
-			slog.String("op", op),
-			slog.String("address", app.cfg.GRPC.Port))
+	app.log.Info("stopping notification gRPC server",
+		slog.String("op", op),
+		slog.String("address", app.cfg.GRPC.Port))
 
 	done := make(chan struct{})
 

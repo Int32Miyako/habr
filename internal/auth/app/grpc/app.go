@@ -47,8 +47,9 @@ func (app *App) Run() error {
 func (app *App) Stop(ctx context.Context) {
 	const op = "grpcapp.Stop"
 
-	app.log.With(slog.String("op", op)).
-		Info("stopping gRPC server", slog.String("address", app.cfg.GRPCServer.Port))
+	app.log.Info("stopping auth gRPC server",
+		slog.String("op", op),
+		slog.String("port", app.cfg.GRPCServer.Port))
 
 	done := make(chan struct{})
 
