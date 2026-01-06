@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"habr/internal/notification/app/grpc"
 	"habr/internal/notification/app/kafka"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // App представляет собой основное приложение, содержащее gRPC сервер и Kafka consumer.
@@ -21,32 +23,31 @@ func New(gRPCApp *grpc.App, kafkaApp *kafka.App) *App {
 	}
 }
 
-// Start запускает Kafka consumer и gRPC сервер в отдельных горутинах.
 func (app *App) Start(ctx context.Context) error {
-	errChan := make(chan error, 2)
+	g, ctx := errgroup.WithContext(ctx)
 
-	go func() {
-		errChan <- app.KafkaApp.Run(ctx)
-	}()
+	g.Go(func() error {
+		return app.KafkaApp.Run(ctx)
+	})
 
-	go func() {
-		errChan <- app.GRPCApp.Run()
-	}()
+	g.Go(func() error {
+		return app.GRPCApp.Run()
+	})
 
-	return <-errChan
+	return g.Wait()
 }
 
 // Stop останавливает Kafka consumer и gRPC сервер.
-func (app *App) Stop(ctx context.Context) error {
+func (app *App) Stop(shutdownCtx context.Context) error {
 	if app.KafkaApp.RegistrationConsumer != nil {
-		err := app.KafkaApp.Stop(ctx)
+		err := app.KafkaApp.Stop(shutdownCtx)
 		if err != nil {
 			return fmt.Errorf("app stop: %w", err)
 		}
 	}
 
 	if app.GRPCApp != nil {
-		app.GRPCApp.Stop(ctx)
+		app.GRPCApp.Stop(shutdownCtx)
 	}
 
 	return nil

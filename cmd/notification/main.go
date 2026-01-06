@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	db "habr/db/notification"
 	"habr/internal/notification/app"
 	"habr/internal/notification/app/grpc"
@@ -55,25 +54,10 @@ func main() {
 	select {
 	case sig := <-stop:
 		log.Info("Received shutdown signal", "signal", sig.String())
-		appCancel()
 	case err = <-serverErrors:
-		if errors.Is(err, context.Canceled) {
-			log.Info("Application context cancelled")
-		} else if err != nil {
-			log.Error("Server error, shutting down", slog.String("error", err.Error()))
-			appCancel()
-
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
-			defer cancel()
-
-			if stopErr := application.Stop(shutdownCtx); stopErr != nil {
-				log.Error("Failed to stop application gracefully", slog.Any("error", stopErr))
-			}
-
-			os.Exit(1)
-		}
-		appCancel()
+		log.Error("Server error, shutting down", "error", err)
 	}
+	appCancel()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
 	defer cancel()
