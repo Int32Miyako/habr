@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"habr/internal/notification/app/kafka/consumer/client"
-	"habr/internal/notification/config"
 	consumerContract "habr/internal/notification/core/interfaces/kafka/client"
 	"habr/internal/notification/core/interfaces/services"
 	"habr/internal/notification/core/models"
@@ -18,17 +16,12 @@ type RegistrationNotifier struct {
 	emailService services.EmailService
 }
 
-func NewRegistrationNotifier(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*RegistrationNotifier, error) {
-	consumer, err := client.NewConsumerGroup(cfg.Kafka, log)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create consumer: %w", err)
-	}
-
+func NewRegistrationNotifier(consumer consumerContract.MessageConsumer, log *slog.Logger, emailService services.EmailService) *RegistrationNotifier {
 	return &RegistrationNotifier{
 		consumer:     consumer,
 		log:          log,
 		emailService: emailService,
-	}, nil
+	}
 }
 
 func (c *RegistrationNotifier) Subscribe(ctx context.Context, topic string) error {

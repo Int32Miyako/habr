@@ -43,13 +43,13 @@ func (ch *ConsumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 	return nil
 }
 
-type KafkaConsumer struct {
+type KafkaConsumerClient struct {
 	consumerGroup sarama.ConsumerGroup
 	log           *slog.Logger
 	kafkaConfig   *config.Kafka
 }
 
-func (k *KafkaConsumer) Subscribe(ctx context.Context, topic string, handler func(*models.Message) error) error {
+func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topic string, handler func(*models.Message) error) error {
 	consumerHandler := &ConsumerHandler{
 		handler: handler,
 		log:     k.log,
@@ -75,7 +75,7 @@ func (k *KafkaConsumer) Subscribe(ctx context.Context, topic string, handler fun
 	return nil
 }
 
-func (k *KafkaConsumer) Close() error {
+func (k *KafkaConsumerClient) Close() error {
 	err := k.consumerGroup.Close()
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (k *KafkaConsumer) Close() error {
 	return nil
 }
 
-func NewConsumerGroup(cfg *config.Kafka, log *slog.Logger) (*KafkaConsumer, error) {
+func NewKafkaConsumerClient(cfg *config.Kafka, log *slog.Logger) (*KafkaConsumerClient, error) {
 	saramaCfg := sarama.NewConfig()
 	saramaCfg.Version = sarama.V4_1_0_0
 	saramaCfg.Consumer.Return.Errors = true
@@ -95,7 +95,7 @@ func NewConsumerGroup(cfg *config.Kafka, log *slog.Logger) (*KafkaConsumer, erro
 		return nil, fmt.Errorf("failed to create consumer group: %w", err)
 	}
 
-	return &KafkaConsumer{
+	return &KafkaConsumerClient{
 		consumerGroup: consumerGroup,
 		log:           log,
 		kafkaConfig:   cfg,

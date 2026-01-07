@@ -8,21 +8,20 @@ import (
 	"github.com/IBM/sarama"
 )
 
-type RegistrationNotifier struct {
+type ProducerKafkaClient struct {
 	producer sarama.SyncProducer
 	topic    string
 	log      *slog.Logger
 }
 
-func (r *RegistrationNotifier) SendMessage(
-	topic string,
+func (r *ProducerKafkaClient) SendMessage(
 	message *models.Message,
 ) error {
 
 	msg := &sarama.ProducerMessage{
-		Topic: topic,
+		Topic: r.topic,
 		Key:   sarama.StringEncoder(message.Key),
-		Value: sarama.StringEncoder(message.Value),
+		Value: sarama.ByteEncoder(message.Value),
 	}
 
 	partition, offset, err := r.producer.SendMessage(msg)
@@ -32,7 +31,7 @@ func (r *RegistrationNotifier) SendMessage(
 
 	r.log.Info(
 		"message sent",
-		slog.String("topic", topic),
+		slog.String("topic", r.topic),
 		slog.Int("partition", int(partition)),
 		slog.Int64("offset", offset),
 	)
@@ -40,7 +39,7 @@ func (r *RegistrationNotifier) SendMessage(
 	return nil
 }
 
-func NewProducer(brokers []string, topic string, log *slog.Logger) (*RegistrationNotifier, error) {
+func NewProducerKafkaClient(brokers []string, topic string, log *slog.Logger) (*ProducerKafkaClient, error) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V4_1_0_0
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -52,14 +51,14 @@ func NewProducer(brokers []string, topic string, log *slog.Logger) (*Registratio
 		return nil, fmt.Errorf("failed to create sarama.NewSyncProducer: %w", err)
 	}
 
-	return &RegistrationNotifier{
+	return &ProducerKafkaClient{
 		producer: producer,
 		topic:    topic,
 		log:      log,
 	}, nil
 }
 
-func (r *RegistrationNotifier) Close() error {
+func (r *ProducerKafkaClient) Close() error {
 	err := r.producer.Close()
 	if err != nil {
 		return fmt.Errorf("failed to close producer: %w", err)

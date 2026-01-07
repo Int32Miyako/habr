@@ -31,7 +31,7 @@ func main() {
 
 	grpcApp := grpc.New(log, cfg, emailService)
 
-	kafkaApp, err := kafka.New(cfg, log, emailService, cfg.Kafka.Topic)
+	kafkaApp, err := kafka.New(cfg, log, emailService)
 	if err != nil {
 		log.Error("failed to create kafka consumer", slog.Any("error", err))
 		os.Exit(1)

@@ -5,6 +5,6 @@ import (
 )
 
 type MessageProducer interface {
-	SendMessage(topic string, message *models.Message) error
+	SendMessage(message *models.Message) error
 	Close() error
 }

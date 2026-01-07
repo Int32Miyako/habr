@@ -23,11 +23,13 @@ func New(gRPCApp *grpc.App, kafkaApp *kafka.App) *App {
 	}
 }
 
+// Start создает контекст с отменой для управления внутренними горутинами
 func (app *App) Start(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
+
+	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return app.KafkaApp.Run(ctx)
+		return app.KafkaApp.Run(gCtx)
 	})
 
 	g.Go(func() error {

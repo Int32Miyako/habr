@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"habr/internal/notification/app/kafka/consumer"
+	"habr/internal/notification/app/kafka/consumer/client"
 	"habr/internal/notification/config"
 	"habr/internal/notification/core/interfaces/services"
 	"log/slog"
@@ -14,15 +15,17 @@ type App struct {
 	TopicConsumer        string
 }
 
-func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService, topic string) (*App, error) {
-	notifier, err := consumer.NewRegistrationNotifier(cfg, log, emailService)
+func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*App, error) {
+	cons, err := client.NewKafkaConsumerClient(cfg.Kafka, log)
 	if err != nil {
 		return nil, fmt.Errorf("kafka app start: %w", err)
 	}
 
+	notifier := consumer.NewRegistrationNotifier(cons, log, emailService)
+
 	app := &App{
 		RegistrationConsumer: notifier,
-		TopicConsumer:        topic,
+		TopicConsumer:        cfg.Kafka.Topic,
 	}
 
 	return app, nil

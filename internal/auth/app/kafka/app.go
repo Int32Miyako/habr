@@ -3,7 +3,7 @@ package kafka
 import (
 	"fmt"
 	"habr/internal/auth/app/kafka/producer"
-	"habr/internal/auth/config"
+	producerContract "habr/internal/notification/core/interfaces/kafka/client"
 	"log/slog"
 )
 
@@ -11,18 +11,10 @@ type App struct {
 	RegistrationNotifier *producer.RegistrationNotifier
 }
 
-func New(cfg *config.Config, log *slog.Logger) (*App, error) {
-	brokers := cfg.Kafka.Brokers
-	topic := cfg.Kafka.Topic
-
-	registrationNotifier, err := producer.NewRegistrationNotifier(brokers, topic, log)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create producer.NewRegistrationNotifier: %w", err)
-	}
-
+func New(prod producerContract.MessageProducer, log *slog.Logger) *App {
 	return &App{
-		RegistrationNotifier: registrationNotifier,
-	}, nil
+		RegistrationNotifier: producer.NewRegistrationNotifier(prod, log),
+	}
 }
 
 func (app App) Close() error {

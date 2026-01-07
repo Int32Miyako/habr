@@ -5,10 +5,11 @@ import (
 	grpcapp "habr/internal/auth/app/grpc"
 	httpapp "habr/internal/auth/app/http"
 	"habr/internal/auth/app/kafka"
+	"habr/internal/auth/app/kafka/producer"
+	"habr/internal/auth/app/kafka/producer/client"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
 	"log/slog"
-	"os"
 )
 
 type App struct {
@@ -22,11 +23,13 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 	grpcApp := grpcapp.New(log, cfg, userService)
 	httpApp := httpapp.New(log, cfg, userService)
 
-	kafkaApp, err := kafka.New(cfg, log)
+	producerClient, err := client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
 	if err != nil {
-		log.Error("failed to create kafka producer", slog.String("error", err.Error()))
-		os.Exit(1)
+		log.Error("Failed to create kafka registration notifier", "error", err)
 	}
+	prod := producer.NewRegistrationNotifier(producerClient, log)
+
+	kafkaApp := kafka.New(prod, log)
 
 	return &App{
 		GRPC:     grpcApp,

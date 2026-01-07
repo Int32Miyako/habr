@@ -6,6 +6,7 @@ import (
 	"habr/db/auth"
 	"habr/internal/auth/app"
 	"habr/internal/auth/app/kafka/producer"
+	"habr/internal/auth/app/kafka/producer/client"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
@@ -46,12 +47,14 @@ func main() {
 	// Send test messages to Kafka
 	go func() {
 		var rn *producer.RegistrationNotifier
-		rn, err = producer.NewRegistrationNotifier(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
+		producerClient, err := client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
 		if err != nil {
-			log.Error("failed to create registration notifier", "error", err)
+			log.Error("failed to create kafka producer", "error", err)
 			serverErrors <- err
 			return
 		}
+		rn = producer.NewRegistrationNotifier(producerClient, log)
+
 		defer func() {
 			if err = rn.Close(); err != nil {
 				log.Error("failed to close registration notifier", "error", err)
