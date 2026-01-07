@@ -3,7 +3,7 @@ package kafka
 import (
 	"fmt"
 	"habr/internal/auth/app/kafka/producer"
-	producerContract "habr/internal/notification/core/interfaces/kafka/client"
+	"habr/internal/auth/app/kafka/producer/client"
 	"log/slog"
 )
 
@@ -11,7 +11,7 @@ type App struct {
 	RegistrationNotifier *producer.RegistrationNotifier
 }
 
-func New(prod producerContract.MessageProducer, log *slog.Logger) *App {
+func New(prod client.MessageProducer, log *slog.Logger) *App {
 	return &App{
 		RegistrationNotifier: producer.NewRegistrationNotifier(prod, log),
 	}

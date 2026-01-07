@@ -2,11 +2,16 @@ package client
 
 import (
 	"fmt"
-	"habr/internal/notification/core/models"
+	"habr/internal/auth/core/models"
 	"log/slog"
 
 	"github.com/IBM/sarama"
 )
+
+type MessageProducer interface {
+	SendMessage(message *models.Message) error
+	Close() error
+}
 
 type ProducerKafkaClient struct {
 	producer sarama.SyncProducer

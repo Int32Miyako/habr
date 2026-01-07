@@ -11,6 +11,11 @@ import (
 	"github.com/IBM/sarama"
 )
 
+type MessageProducer interface {
+	SendMessage(message *models.Message) error
+	Close() error
+}
+
 type ConsumerHandler struct {
 	handler func(*models.Message) error
 	log     *slog.Logger
