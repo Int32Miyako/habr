@@ -25,15 +25,15 @@ func NewRegistrationNotifier(consumer consumerContract.MessageConsumer, log *slo
 	}
 }
 
-func (c *RegistrationNotifier) Subscribe(ctx context.Context, topic string) error {
-	err := c.consumer.Subscribe(ctx, topic, c.handleMessage)
+func (c *RegistrationNotifier) Subscribe(ctx context.Context, topics []string) error {
+	err := c.consumer.Subscribe(ctx, topics, c.handleMessage)
 	if err != nil {
 		c.log.Error("failed to subscribe to topic",
-			slog.String("topic", topic),
+			slog.Any("topic", topics),
 			slog.String("error", err.Error()),
 		)
 
-		return fmt.Errorf("failed to subscribe to topic %s: %w", topic, err)
+		return fmt.Errorf("failed to subscribe to topic %s: %w", topics, err)
 	}
 
 	return nil

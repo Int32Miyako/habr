@@ -12,7 +12,7 @@ import (
 
 type App struct {
 	RegistrationConsumer *consumer.RegistrationNotifier
-	TopicConsumer        string
+	TopicsConsumer       []string
 }
 
 func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*App, error) {
@@ -25,7 +25,7 @@ func New(cfg *config.Config, log *slog.Logger, emailService services.EmailServic
 
 	app := &App{
 		RegistrationConsumer: notifier,
-		TopicConsumer:        cfg.Kafka.Topic,
+		TopicsConsumer:       cfg.Kafka.Topics,
 	}
 
 	return app, nil
@@ -35,7 +35,7 @@ func New(cfg *config.Config, log *slog.Logger, emailService services.EmailServic
 func (a App) Run(ctx context.Context) error {
 	const op = "kafka.Run"
 
-	err := a.RegistrationConsumer.Subscribe(ctx, a.TopicConsumer)
+	err := a.RegistrationConsumer.Subscribe(ctx, a.TopicsConsumer)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

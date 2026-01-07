@@ -6,7 +6,6 @@ import (
 	"habr/internal/notification/config"
 	"habr/internal/notification/core/models"
 	"log/slog"
-	"strings"
 
 	"github.com/IBM/sarama"
 )
@@ -54,7 +53,7 @@ type KafkaConsumerClient struct {
 	kafkaConfig   *config.Kafka
 }
 
-func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topic string, handler func(*models.Message) error) error {
+func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topics []string, handler func(*models.Message) error) error {
 	consumerHandler := &ConsumerHandler{
 		handler: handler,
 		log:     k.log,
@@ -69,7 +68,7 @@ func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topic string, handl
 			default:
 			}
 
-			err := k.consumerGroup.Consume(ctx, strings.Split(topic, ","), consumerHandler)
+			err := k.consumerGroup.Consume(ctx, topics, consumerHandler)
 			if err != nil {
 				k.log.Error("Error consuming messages", slog.String("error", err.Error()))
 				return

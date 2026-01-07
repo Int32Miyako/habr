@@ -6,6 +6,6 @@ import (
 )
 
 type MessageConsumer interface {
-	Subscribe(ctx context.Context, topic string, handler func(*models.Message) error) error
+	Subscribe(ctx context.Context, topics []string, handler func(*models.Message) error) error
 	Close() error
 }
