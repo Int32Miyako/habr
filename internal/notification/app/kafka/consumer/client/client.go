@@ -82,7 +82,7 @@ func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topics []string, ha
 func (k *KafkaConsumerClient) Close() error {
 	err := k.consumerGroup.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to close consumer group: %w", err)
 	}
 
 	return nil
@@ -98,6 +98,12 @@ func NewKafkaConsumerClient(cfg *config.Kafka, log *slog.Logger) (*KafkaConsumer
 	if err != nil {
 		return nil, fmt.Errorf("failed to create consumer group: %w", err)
 	}
+
+	go func() {
+		for err = range consumerGroup.Errors() {
+			log.Error("kafka consumer error", slog.Any("error", err))
+		}
+	}()
 
 	return &KafkaConsumerClient{
 		consumerGroup: consumerGroup,

@@ -41,7 +41,7 @@ func (app *App) Start(ctx context.Context) error {
 
 // Stop останавливает Kafka consumer и gRPC сервер.
 func (app *App) Stop(shutdownCtx context.Context) error {
-	if app.KafkaApp.RegistrationConsumer != nil {
+	if app.KafkaApp != nil && app.KafkaApp.RegistrationConsumer != nil {
 		err := app.KafkaApp.Stop(shutdownCtx)
 		if err != nil {
 			return fmt.Errorf("app stop: %w", err)
