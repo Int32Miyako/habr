@@ -10,9 +10,10 @@ import (
 	"github.com/IBM/sarama"
 )
 
-type MessageProducer interface {
-	SendMessage(message *models.Message) error
-	Close() error
+type KafkaConsumerClient struct {
+	consumerGroup sarama.ConsumerGroup
+	log           *slog.Logger
+	kafkaConfig   *config.Kafka
 }
 
 type ConsumerHandler struct {
@@ -47,12 +48,6 @@ func (ch *ConsumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 	}
 
 	return nil
-}
-
-type KafkaConsumerClient struct {
-	consumerGroup sarama.ConsumerGroup
-	log           *slog.Logger
-	kafkaConfig   *config.Kafka
 }
 
 func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topics []string, handler func(*models.Message) error) error {
