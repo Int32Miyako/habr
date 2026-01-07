@@ -15,36 +15,39 @@ type MessageProducer interface {
 
 type ProducerKafkaClient struct {
 	producer sarama.SyncProducer
-	topic    string
+	topics   []string
 	log      *slog.Logger
 }
 
+// SendMessage sends a message to the all configured topics.
 func (r *ProducerKafkaClient) SendMessage(
 	message *models.Message,
 ) error {
+	for _, topic := range r.topics {
+		msg := &sarama.ProducerMessage{
+			Topic: topic,
+			Key:   sarama.StringEncoder(message.Key),
+			Value: sarama.ByteEncoder(message.Value),
+		}
 
-	msg := &sarama.ProducerMessage{
-		Topic: r.topic,
-		Key:   sarama.StringEncoder(message.Key),
-		Value: sarama.ByteEncoder(message.Value),
+		partition, offset, err := r.producer.SendMessage(msg)
+		if err != nil {
+			return fmt.Errorf("kafka send failed: %w", err)
+		}
+
+		r.log.Info(
+			"message sent",
+			slog.String("topic", topic),
+			slog.Int("partition", int(partition)),
+			slog.Int64("offset", offset),
+		)
+
 	}
-
-	partition, offset, err := r.producer.SendMessage(msg)
-	if err != nil {
-		return fmt.Errorf("kafka send failed: %w", err)
-	}
-
-	r.log.Info(
-		"message sent",
-		slog.String("topic", r.topic),
-		slog.Int("partition", int(partition)),
-		slog.Int64("offset", offset),
-	)
 
 	return nil
 }
 
-func NewProducerKafkaClient(brokers []string, topic string, log *slog.Logger) (*ProducerKafkaClient, error) {
+func NewProducerKafkaClient(brokers []string, topics []string, log *slog.Logger) (*ProducerKafkaClient, error) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V4_1_0_0
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -58,7 +61,7 @@ func NewProducerKafkaClient(brokers []string, topic string, log *slog.Logger) (*
 
 	return &ProducerKafkaClient{
 		producer: producer,
-		topic:    topic,
+		topics:   topics,
 		log:      log,
 	}, nil
 }
