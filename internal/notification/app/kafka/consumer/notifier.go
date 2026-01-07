@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"habr/internal/notification/core/events"
 	consumerContract "habr/internal/notification/core/interfaces/kafka/client"
 	"habr/internal/notification/core/interfaces/services"
 	"habr/internal/notification/core/models"
@@ -39,25 +40,15 @@ func (c *RegistrationNotifier) Subscribe(ctx context.Context, topic string) erro
 }
 
 func (c *RegistrationNotifier) handleMessage(msg *models.Message) error {
-	c.log.Info("received message from kafka",
-		slog.String("key", msg.Key),
-		slog.String("value", string(msg.Value)),
-	)
-
-	// Здесь можно добавить логику обработки сообщения
-	// Например, десериализация и отправка email
-	var emailData map[string]interface{}
-	if err := json.Unmarshal(msg.Value, &emailData); err != nil {
-		c.log.Error("failed to unmarshal message",
-			slog.String("error", err.Error()),
-			slog.String("value", string(msg.Value)),
-		)
-
-		return err
+	var event events.UserRegistered
+	if err := json.Unmarshal(msg.Value, &event); err != nil {
+		c.log.Error("failed to unmarshal event", err.Error())
+		return fmt.Errorf("failed to unmarshal event: %w", err)
 	}
 
-	c.log.Info("message processed successfully",
-		slog.Any("data", emailData),
+	c.log.Info("received message from kafka",
+		slog.String("key", msg.Key),
+		slog.Any("event", event),
 	)
 
 	return nil

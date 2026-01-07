@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"habr/db/auth"
 	"habr/internal/auth/app"
@@ -10,12 +11,14 @@ import (
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
+	"habr/internal/auth/core/events"
 	"habr/internal/auth/core/jwt"
 	"habr/internal/auth/logger"
 	"habr/internal/notification/core/models"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -46,14 +49,14 @@ func main() {
 
 	// Send test messages to Kafka
 	go func() {
-		var rn *producer.RegistrationNotifier
-		producerClient, err := client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
+		var producerClient *client.ProducerKafkaClient
+		producerClient, err = client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
 		if err != nil {
 			log.Error("failed to create kafka producer", "error", err)
 			serverErrors <- err
 			return
 		}
-		rn = producer.NewRegistrationNotifier(producerClient, log)
+		rn := producer.NewRegistrationNotifier(producerClient, log)
 
 		defer func() {
 			if err = rn.Close(); err != nil {
@@ -62,14 +65,21 @@ func main() {
 		}()
 
 		for i := 0; i < 200; i++ {
+			time.Sleep(100 * time.Millisecond)
+			userRegisteredBytes, err := json.Marshal(&events.UserRegistered{
+				UserID: int64(i),
+				Email:  "testuser",
+				Time:   time.Now().Unix(),
+			})
+			if err != nil {
+				log.Error("failed to marshal user registered event", "error", err)
+				serverErrors <- err
+				return
+			}
+
 			msg := models.Message{
-				Key: fmt.Sprintf("%d", i),
-				Value: []byte(fmt.Sprintf(
-					`{
-					"email": "newuser%d@example.com",
-					"username": "newuser%d",
-					"type": "registration"
-					}`, i, i)),
+				Key:   fmt.Sprintf("%d", i),
+				Value: userRegisteredBytes,
 			}
 
 			err = rn.SendMessage(&msg)

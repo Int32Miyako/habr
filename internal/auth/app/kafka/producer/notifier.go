@@ -13,7 +13,6 @@ type RegistrationNotifier struct {
 }
 
 func NewRegistrationNotifier(producer producerContract.MessageProducer, log *slog.Logger) *RegistrationNotifier {
-
 	return &RegistrationNotifier{
 		producer: producer,
 		log:      log,
