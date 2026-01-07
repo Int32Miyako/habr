@@ -2,23 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"habr/db/auth"
 	"habr/internal/auth/app"
-	"habr/internal/auth/app/kafka/producer"
-	"habr/internal/auth/app/kafka/producer/client"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
-	"habr/internal/auth/core/events"
 	"habr/internal/auth/core/jwt"
-	"habr/internal/auth/core/models"
 	"habr/internal/auth/logger"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -46,50 +39,6 @@ func main() {
 	serverErrors := make(chan error, 2)
 
 	application.Start(serverErrors)
-
-	// Send test messages to Kafka
-	go func() {
-		var producerClient *client.ProducerKafkaClient
-		producerClient, err = client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
-		if err != nil {
-			log.Error("failed to create kafka producer", "error", err)
-			serverErrors <- err
-			return
-		}
-		rn := producer.NewRegistrationNotifier(producerClient, log)
-
-		defer func() {
-			if err = rn.Close(); err != nil {
-				log.Error("failed to close registration notifier", "error", err)
-			}
-		}()
-
-		for i := 0; i < 200; i++ {
-			time.Sleep(100 * time.Millisecond)
-			userRegisteredBytes, err := json.Marshal(&events.UserRegistered{
-				UserID: int64(i),
-				Email:  "testuser",
-				Time:   time.Now().Unix(),
-			})
-			if err != nil {
-				log.Error("failed to marshal user registered event", "error", err)
-				serverErrors <- err
-				return
-			}
-
-			msg := models.Message{
-				Key:   fmt.Sprintf("%d", i),
-				Value: userRegisteredBytes,
-			}
-
-			err = rn.SendMessage(&msg)
-			if err != nil {
-				log.Error("failed to send message", "error", err)
-				serverErrors <- err
-				return
-			}
-		}
-	}()
 
 	select {
 	case sig := <-stop:
