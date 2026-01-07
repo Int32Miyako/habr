@@ -40,7 +40,9 @@ func (ch *ConsumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 		}
 		if err := ch.handler(msg); err != nil {
 			ch.log.Error("handler error", "err", err)
+			continue
 		}
+
 		session.MarkMessage(message, "processed")
 	}
 
