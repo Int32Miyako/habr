@@ -56,18 +56,18 @@ func (k *KafkaConsumerClient) Subscribe(ctx context.Context, topics []string, ha
 		log:     k.log,
 	}
 
+	k.Run(ctx)
+
 	go func() {
 		for {
-			select {
-			case <-ctx.Done():
-				k.log.Info("Consumer context cancelled, stopping consumption")
-				return
-			default:
-			}
-
 			err := k.consumerGroup.Consume(ctx, topics, consumerHandler)
 			if err != nil {
 				k.log.Error("Error consuming messages", slog.String("error", err.Error()))
+				return
+			}
+
+			if ctx.Err() != nil {
+				k.log.Info("Consumer context cancelled, stopping consumption")
 				return
 			}
 		}
@@ -96,15 +96,26 @@ func NewKafkaConsumerClient(cfg *config.Kafka, log *slog.Logger) (*KafkaConsumer
 		return nil, fmt.Errorf("failed to create consumer group: %w", err)
 	}
 
-	go func() {
-		for err = range consumerGroup.Errors() {
-			log.Error("kafka consumer error", slog.Any("error", err))
-		}
-	}()
-
 	return &KafkaConsumerClient{
 		consumerGroup: consumerGroup,
 		log:           log,
 		kafkaConfig:   cfg,
 	}, nil
+}
+
+func (k *KafkaConsumerClient) Run(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case err, ok := <-k.consumerGroup.Errors():
+				if !ok {
+					return
+				}
+				k.log.Error("kafka consumer error", slog.Any("error", err))
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }

@@ -16,12 +16,12 @@ type App struct {
 }
 
 func New(cfg *config.Config, log *slog.Logger, emailService services.EmailService) (*App, error) {
-	cons, err := client.NewKafkaConsumerClient(cfg.Kafka, log)
+	consumerClient, err := client.NewKafkaConsumerClient(cfg.Kafka, log)
 	if err != nil {
 		return nil, fmt.Errorf("kafka app start: %w", err)
 	}
 
-	notifier := consumer.NewRegistrationNotifier(cons, log, emailService)
+	notifier := consumer.NewRegistrationNotifier(consumerClient, log, emailService)
 
 	app := &App{
 		RegistrationConsumer: notifier,

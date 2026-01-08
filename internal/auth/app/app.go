@@ -26,6 +26,12 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 	producerClient, err := client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topics, log)
 	if err != nil {
 		log.Error("Failed to create kafka registration notifier", "error", err)
+		return &App{
+			GRPC:     grpcApp,
+			HTTP:     httpApp,
+			KafkaApp: nil,
+			log:      log,
+		}
 	}
 	prod := producer.NewRegistrationNotifier(producerClient, log)
 

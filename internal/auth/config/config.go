@@ -95,7 +95,7 @@ func MustLoad() *Config {
 
 	kafkaTopicsStr := os.Getenv("AUTH_KAFKA_TOPICS")
 	if kafkaTopicsStr == "" {
-		log.Fatal("AUTH_KAFKA_TOPIC must be set")
+		log.Fatal("AUTH_KAFKA_TOPICS must be set")
 	}
 	kafkaTopics := strings.Split(kafkaTopicsStr, ",")
 	for i, b := range kafkaTopics {
