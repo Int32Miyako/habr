@@ -42,7 +42,7 @@ type (
 
 	Kafka struct {
 		Brokers []string
-		Topics  []string
+		Topic   string
 	}
 )
 
@@ -93,13 +93,9 @@ func MustLoad() *Config {
 		kafkaBrokers[i] = strings.TrimSpace(b)
 	}
 
-	kafkaTopicsStr := os.Getenv("AUTH_KAFKA_TOPICS")
-	if kafkaTopicsStr == "" {
+	kafkaTopic := os.Getenv("AUTH_KAFKA_TOPIC")
+	if kafkaTopic == "" {
 		log.Fatal("AUTH_KAFKA_TOPICS must be set")
-	}
-	kafkaTopics := strings.Split(kafkaTopicsStr, ",")
-	for i, b := range kafkaTopics {
-		kafkaTopics[i] = strings.TrimSpace(b)
 	}
 
 	return &Config{
@@ -131,7 +127,7 @@ func MustLoad() *Config {
 
 		Kafka: &Kafka{
 			Brokers: kafkaBrokers,
-			Topics:  kafkaTopics,
+			Topic:   kafkaTopic,
 		},
 	}
 }
