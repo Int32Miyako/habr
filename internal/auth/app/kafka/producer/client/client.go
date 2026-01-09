@@ -8,7 +8,7 @@ import (
 	"github.com/IBM/sarama"
 )
 
-type MessageProducer interface {
+type MessageProducerClient interface {
 	SendMessage(message *models.Message) error
 	Close() error
 }

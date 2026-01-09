@@ -33,9 +33,10 @@ func New(cfg *config.Config, log *slog.Logger, userService *services.UserService
 			log:      log,
 		}
 	}
-	prod := producer.NewRegistrationNotifier(producerClient, log)
 
-	kafkaApp := kafka.New(prod, log)
+	messageProducer := producer.NewRegistrationNotifier(producerClient, log)
+
+	kafkaApp := kafka.New(messageProducer, log)
 
 	return &App{
 		GRPC:     grpcApp,

@@ -9,19 +9,19 @@ import (
 )
 
 type RegistrationNotifier struct {
-	producer client.MessageProducer
-	log      *slog.Logger
+	producerClient client.MessageProducerClient
+	log            *slog.Logger
 }
 
-func NewRegistrationNotifier(producer client.MessageProducer, log *slog.Logger) *RegistrationNotifier {
+func NewRegistrationNotifier(producerClient client.MessageProducerClient, log *slog.Logger) *RegistrationNotifier {
 	return &RegistrationNotifier{
-		producer: producer,
-		log:      log,
+		producerClient: producerClient,
+		log:            log,
 	}
 }
 
 func (p *RegistrationNotifier) SendMessage(message *models.Message) error {
-	err := p.producer.SendMessage(message)
+	err := p.producerClient.SendMessage(message)
 	if err != nil {
 		p.log.Error("failed to send message to kafka",
 			slog.String("error", err.Error()),
@@ -34,7 +34,7 @@ func (p *RegistrationNotifier) SendMessage(message *models.Message) error {
 }
 
 func (p *RegistrationNotifier) Close() error {
-	if err := p.producer.Close(); err != nil {
+	if err := p.producerClient.Close(); err != nil {
 		return fmt.Errorf("close kafka producer: %w", err)
 	}
 
