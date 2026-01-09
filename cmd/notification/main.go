@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	db "habr/db/notification"
 	"habr/internal/notification/app"
+	"habr/internal/notification/app/grpc"
+	"habr/internal/notification/app/kafka"
+	"habr/internal/notification/app/repositories"
+	"habr/internal/notification/app/services"
 	"habr/internal/notification/config"
-	"habr/internal/notification/repositories"
-	"habr/internal/notification/services"
 	"habr/internal/pkg/logger"
 	"log/slog"
 	"os"
@@ -15,8 +18,9 @@ import (
 
 func main() {
 	cfg := config.MustLoad()
+	ctx := context.Background()
 
-	database := db.MustInitialize(cfg)
+	database := db.Initialize(ctx, cfg)
 	defer database.Close()
 
 	log := logger.SetupLogger(cfg.Env)
@@ -25,23 +29,42 @@ func main() {
 	emailRepo := repositories.NewEmailRepository(database.Pool)
 	emailService := services.NewEmailService(emailRepo)
 
-	application := app.New(cfg, log, emailService)
-	go func() {
-		if err := application.Start(); err != nil {
-			log.Error("app stopped with error", slog.Any("error", err))
-			os.Exit(1)
-		}
-	}()
+	grpcApp := grpc.New(log, cfg, emailService)
 
-	waitForShutdown(application)
-	log.Info("Gracefully stopped")
-}
+	kafkaApp, err := kafka.New(cfg, log, emailService)
+	if err != nil {
+		log.Error("failed to create kafka consumer", slog.Any("error", err))
+		os.Exit(1)
+	}
 
-func waitForShutdown(application *app.App) {
+	application := app.New(grpcApp, kafkaApp)
+
+	appCtx, appCancel := context.WithCancel(context.Background())
+	defer appCancel()
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
-	<-stop
+	serverErrors := make(chan error, 2)
 
-	application.Stop()
+	go func() {
+		serverErrors <- application.Start(appCtx)
+	}()
+
+	select {
+	case sig := <-stop:
+		log.Info("Received shutdown signal", "signal", sig.String())
+	case err = <-serverErrors:
+		log.Error("Server error, shutting down", "error", err)
+	}
+	appCancel()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
+	defer cancel()
+
+	if err = application.Stop(shutdownCtx); err != nil {
+		log.Error("Failed to stop application gracefully", slog.Any("error", err))
+		os.Exit(1)
+	}
+	log.Info("Gracefully stopped")
 }

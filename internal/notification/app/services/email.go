@@ -8,3 +8,7 @@ import (
 func NewEmailService(repo repositories.EmailRepository) services.EmailService {
 	return nil
 }
+
+func SendEmail(to string, subject string, body string) error {
+	return nil
+}

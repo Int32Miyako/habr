@@ -34,14 +34,13 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
 
-  kowl:
-    image: quay.io/cloudhut/kowl:latest
-    container_name: kowl
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
     restart: on-failure
-    volumes:
-      - ./deploy/kowl:/etc/kowl/
     ports:
-      - "8011:8080"
-    entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
     depends_on:
       - kafka

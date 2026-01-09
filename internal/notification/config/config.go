@@ -4,16 +4,20 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Env        string
+	GracefulShutdownTimeout time.Duration
+	Env                     string
+
 	Database   *Database
 	GRPC       *GRPCServer
 	AuthClient *AuthClient
+	Kafka      *Kafka
 }
 
 type Database struct {
@@ -33,6 +37,12 @@ type GRPCServer struct {
 type AuthClient struct {
 	Host string
 	Port string
+}
+
+type Kafka struct {
+	Brokers       []string
+	ConsumerGroup string
+	Topics        []string
 }
 
 func MustLoad() *Config {
@@ -109,8 +119,38 @@ func MustLoad() *Config {
 		log.Fatal("NOTIFICATION_GRPC_AUTH_CLIENT_PORT must be set")
 	}
 
+	// Kafka config
+	kafkaBrokersStr := os.Getenv("NOTIFICATION_KAFKA_BROKERS")
+	if kafkaBrokersStr == "" {
+		log.Fatal("NOTIFICATION_KAFKA_BROKERS must be set")
+	}
+	kafkaBrokers := strings.Split(kafkaBrokersStr, ",")
+	for i, b := range kafkaBrokers {
+		kafkaBrokers[i] = strings.TrimSpace(b)
+	}
+
+	consumerGroup := os.Getenv("NOTIFICATION_KAFKA_CONSUMER_GROUP")
+	if consumerGroup == "" {
+		log.Fatal("NOTIFICATION_KAFKA_CONSUMER_GROUP must be set")
+	}
+
+	kafkaTopicsStr := os.Getenv("NOTIFICATION_KAFKA_TOPICS")
+	if kafkaTopicsStr == "" {
+		log.Fatal("NOTIFICATION_KAFKA_TOPICS must be set in format - topic1,topic2")
+	}
+	kafkaTopics := strings.Split(kafkaTopicsStr, ",")
+	for i, b := range kafkaTopics {
+		kafkaTopics[i] = strings.TrimSpace(b)
+	}
+
+	gracefulShutdownTimeout, err := strconv.Atoi(os.Getenv("NOTIFICATION_GRACEFUL_SHUTDOWN_TIMEOUT"))
+	if err != nil {
+		log.Fatal("NOTIFICATION_GRACEFUL_SHUTDOWN_TIMEOUT must be set")
+	}
+
 	return &Config{
-		Env: env,
+		GracefulShutdownTimeout: time.Duration(gracefulShutdownTimeout) * time.Second,
+		Env:                     env,
 		Database: &Database{
 			Username: username,
 			Password: password,
@@ -126,6 +166,11 @@ func MustLoad() *Config {
 		AuthClient: &AuthClient{
 			Host: grpcAuthClientHost,
 			Port: grpcAuthClientPort,
+		},
+		Kafka: &Kafka{
+			Brokers:       kafkaBrokers,
+			ConsumerGroup: consumerGroup,
+			Topics:        kafkaTopics,
 		},
 	}
 }

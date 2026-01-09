@@ -1,10 +1,11 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
+	grpcserver "habr/internal/notification/app/grpc/server"
 	"habr/internal/notification/config"
 	"habr/internal/notification/core/interfaces/services"
-	grpcserver "habr/internal/notification/grpc/server"
 	"log/slog"
 	"net"
 
@@ -43,11 +44,26 @@ func (app *App) Run() error {
 	return nil
 }
 
-func (app *App) Stop() {
-	const op = "grpcapp.Stop"
+func (app *App) Stop(ctx context.Context) {
+	const op = "notification grpcapp.Stop"
 
-	app.log.With(slog.String("op", op)).
-		Info("stopping gRPC server", slog.String("address", app.cfg.GRPC.Port))
+	app.log.Info("stopping notification gRPC server",
+		slog.String("op", op),
+		slog.String("address", app.cfg.GRPC.Port))
 
-	app.gRPCServer.GracefulStop()
+	done := make(chan struct{})
+
+	go func() {
+		app.gRPCServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		app.log.Info("gRPC server stopped gracefully")
+
+	case <-ctx.Done():
+		app.log.Warn("gRPC graceful shutdown timeout exceeded, forcing stop")
+		app.gRPCServer.Stop()
+	}
 }
