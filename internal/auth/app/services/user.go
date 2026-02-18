@@ -3,30 +3,41 @@ package services
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"habr/internal/auth/app/http/dto"
 	"habr/internal/auth/app/repositories"
+	"habr/internal/auth/core/events"
 	"habr/internal/auth/core/jwt"
+	"habr/internal/auth/core/models"
 	"habr/internal/pkg/constants/customerrors"
 	"habr/internal/pkg/constants/dbcodes"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type RegistrationNotifier interface {
+	SendMessage(message *models.Message) error
+}
+
 type UserService struct {
 	userRepo   *repositories.UserRepository
 	jwtManager *jwt.Manager
+	notifier   RegistrationNotifier
+	log        *slog.Logger
 }
 
-func NewUserService(repo *repositories.UserRepository, jwt *jwt.Manager) *UserService {
-	return &UserService{userRepo: repo, jwtManager: jwt}
+func NewUserService(repo *repositories.UserRepository, jwt *jwt.Manager, notifier RegistrationNotifier, log *slog.Logger) *UserService {
+	return &UserService{userRepo: repo, jwtManager: jwt, notifier: notifier, log: log}
 }
 
 // RegisterUser создаёт хеш пароля, проверяет уникальность email и сохраняет пользователя в БД
+// так же отправляет событие о регистрации в Kafka, если notifier настроен
 func (s *UserService) RegisterUser(ctx context.Context, email, username, password string) (int64, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -39,6 +50,34 @@ func (s *UserService) RegisterUser(ctx context.Context, email, username, passwor
 			return 0, customerrors.ErrUserAlreadyExists
 		}
 		return 0, customerrors.ErrInternalServer
+	}
+
+	if s.notifier != nil {
+		event := events.UserRegistered{
+			UserID: userID,
+			Email:  email,
+			Time:   time.Now().Unix(),
+		}
+
+		eventData, err := json.Marshal(event)
+		if err != nil {
+			s.log.Error("failed to marshal user registered event", slog.String("error", err.Error()))
+		} else {
+			message := &models.Message{
+				Key:   fmt.Sprintf("user_%d", userID),
+				Value: eventData,
+			}
+			if err := s.notifier.SendMessage(message); err != nil {
+				s.log.Error("failed to send registration event to kafka", slog.String("error", err.Error()))
+			} else {
+				s.log.Info("registration event sent to kafka",
+					slog.Int64("user_id", userID),
+					slog.String("email", email),
+				)
+			}
+		}
+	} else {
+		s.log.Warn("kafka notifier is not configured, skipping registration event")
 	}
 
 	return userID, nil

@@ -4,6 +4,8 @@ import (
 	"context"
 	"habr/db/auth"
 	"habr/internal/auth/app"
+	"habr/internal/auth/app/kafka/producer"
+	"habr/internal/auth/app/kafka/producer/client"
 	"habr/internal/auth/app/repositories"
 	"habr/internal/auth/app/services"
 	"habr/internal/auth/config"
@@ -27,9 +29,17 @@ func main() {
 	log := logger.New()
 	log.Info("Starting auth service")
 
+	var notifier *producer.RegistrationNotifier
+	producerClient, err := client.NewProducerKafkaClient(cfg.Kafka.Brokers, cfg.Kafka.Topic, log)
+	if err != nil {
+		log.Error("Failed to create kafka producer", "error", err)
+	} else {
+		notifier = producer.NewRegistrationNotifier(producerClient, log)
+	}
+
 	userRepo := repositories.NewUserRepository(database.Pool)
 	jwtManager := jwt.NewJWTManager(cfg)
-	userService := services.NewUserService(userRepo, jwtManager)
+	userService := services.NewUserService(userRepo, jwtManager, notifier, log)
 
 	application := app.New(cfg, log, userService)
 
