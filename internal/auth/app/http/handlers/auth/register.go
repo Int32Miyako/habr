@@ -14,6 +14,12 @@ func RegisterUser(userService *services.UserService) http.HandlerFunc {
 		ctx := r.Context()
 		req := dto.RequestRegisterUser{}
 
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			_ = formatter.RespBadRequest("Bad Request", w)
+			return
+		}
+
 		if req.Email == "" {
 			_ = formatter.RespBadRequest("Bad Request", w)
 			return
@@ -23,12 +29,6 @@ func RegisterUser(userService *services.UserService) http.HandlerFunc {
 			return
 		}
 		if req.Password == "" {
-			_ = formatter.RespBadRequest("Bad Request", w)
-			return
-		}
-
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
 			_ = formatter.RespBadRequest("Bad Request", w)
 			return
 		}
